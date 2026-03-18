@@ -1,0 +1,37 @@
+# Tekton Triggers v0.18.0 Manifest
+# 원본: https://storage.googleapis.com/tekton-releases/triggers/previous/v0.18.0/release.yaml
+#
+# TODO: 이미지 주소 치환 필요
+# - 원본: gcr.io/tekton-releases/... → {{ registry_host }}/tekton/...
+# - SEClouditREG placeholder를 실제 레지스트리 주소로 치환
+# - 오프라인 환경을 위해 Harbor에 이미지 사전 로드 필요
+#
+# 이 파일은 placeholder입니다.
+# 실제 배포 전 아래 단계 수행:
+# 1. Tekton Triggers v0.18.0 release.yaml 다운로드
+# 2. 이미지 주소를 내부 레지스트리로 치환
+# 3. 이 파일 교체
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-triggers
+
+# TODO: 실제 Tekton Triggers manifest 내용으로 교체
+# 포함 리소스:
+# - ClusterRole, ClusterRoleBinding
+# - ServiceAccount
+# - ConfigMap (config-logging-triggers, config-observability-triggers 등)
+# - Deployment (tekton-triggers-controller, tekton-triggers-webhook)
+# - Service
+# - CustomResourceDefinitions (EventListener, TriggerBinding, TriggerTemplate, Trigger 등)
+#
+# 이미지 목록 (치환 대상):
+# - gcr.io/tekton-releases/github.com/tektoncd/triggers/cmd/controller:v0.18.0
+# - gcr.io/tekton-releases/github.com/tektoncd/triggers/cmd/webhook:v0.18.0
+# - gcr.io/tekton-releases/github.com/tektoncd/triggers/cmd/eventlistenersink:v0.18.0
+# - gcr.io/tekton-releases/github.com/tektoncd/triggers/cmd/interceptors:v0.18.0

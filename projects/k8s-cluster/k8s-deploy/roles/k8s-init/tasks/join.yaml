@@ -1,0 +1,27 @@
+# roles/k8s-init/tasks/join.yaml
+# kubeadm Worker 노드 join
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# kubeadm join (Worker 노드)
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: Worker join 여부 확인
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubelet_conf_check
+
+- name: kubeadm join 실행 (최초 1회)
+  command: "{{ hostvars[groups['masters'][0]]['kubeadm_join_command'] }}"
+  when: not kubelet_conf_check.stat.exists
+  register: kubeadm_join_result
+
+# ─────────────────────────────────────────────────────────────────────────────
+# kubelet 서비스 확인
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: kubelet 서비스 상태 확인
+  systemd:
+    name: kubelet
+    state: started
+    enabled: true

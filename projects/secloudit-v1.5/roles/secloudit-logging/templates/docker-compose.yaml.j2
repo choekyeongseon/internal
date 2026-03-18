@@ -1,0 +1,35 @@
+# roles/secloudit-logging/templates/docker-compose.yaml.j2
+# SECloudit Logging (MongoDB + FluentD Forward)
+
+version: "3.8"
+
+services:
+  mongodb:
+    image: {{ registry_host }}:{{ registry_port }}/secloudit/mongodb:{{ mongodb_version }}
+    container_name: mongodb
+    restart: always
+    ports:
+      - "{{ mongodb_port }}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: {{ mongodb_root_password }}
+    volumes:
+      - mongodb_data:/data/db
+
+  fluentd-forward:
+    image: {{ registry_host }}:{{ registry_port }}/secloudit/fluentd:{{ fluentd_version }}
+    container_name: fluentd-forward
+    restart: always
+    ports:
+      - "{{ fluentd_forward_port }}:24224"
+      - "{{ fluentd_forward_port }}:24224/udp"
+    environment:
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
+      MONGODB_USER: root
+      MONGODB_PASSWORD: {{ mongodb_root_password }}
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:

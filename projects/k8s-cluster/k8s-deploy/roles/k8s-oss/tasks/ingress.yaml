@@ -1,0 +1,45 @@
+# roles/k8s-oss/tasks/ingress.yaml
+# Ingress NGINX Controller 설치
+
+---
+- name: Ingress Controller 설치 여부 확인
+  command: kubectl get deployment ingress-nginx-controller -n ingress-nginx
+  register: ingress_check
+  changed_when: false
+  failed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: ingress-nginx namespace 생성
+  command: kubectl create namespace ingress-nginx
+  when: ingress_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: ns_result
+  failed_when: ns_result.rc != 0 and 'already exists' not in ns_result.stderr
+
+- name: Ingress NGINX manifest 복사
+  copy:
+    src: ingress-nginx/ingress-nginx-{{ oss_versions.ingress_nginx }}.yaml
+    dest: /tmp/ingress-nginx.yaml
+    mode: '0644'
+  when: ingress_check.rc != 0
+
+- name: Ingress NGINX manifest에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/ingress-nginx.yaml
+    regexp: 'registry.k8s.io/ingress-nginx'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/ingress-nginx'
+  when: ingress_check.rc != 0
+
+- name: Ingress NGINX manifest 적용
+  command: kubectl apply -f /tmp/ingress-nginx.yaml
+  when: ingress_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Ingress Controller Deployment Ready 대기
+  command: kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s
+  when: ingress_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"

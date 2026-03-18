@@ -1,0 +1,103 @@
+# roles/k8s-preinstall/tasks/main.yaml
+# K8s 사전 설정: SELinux, swap, 커널 모듈, sysctl, firewalld
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# SELinux 설정
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: SELinux permissive 모드 설정
+  selinux:
+    policy: targeted
+    state: permissive
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Swap 비활성화
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: swap 비활성화 (즉시)
+  command: swapoff -a
+  changed_when: false
+
+- name: /etc/fstab에서 swap 항목 주석 처리
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s.*)$'
+    replace: '# \1'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 커널 모듈 로드
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: 커널 모듈 설정 파일 생성
+  copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+    mode: '0644'
+
+- name: overlay 모듈 로드
+  modprobe:
+    name: overlay
+    state: present
+
+- name: br_netfilter 모듈 로드
+  modprobe:
+    name: br_netfilter
+    state: present
+
+# ─────────────────────────────────────────────────────────────────────────────
+# sysctl 설정
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: K8s sysctl 설정
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/k8s.conf
+    reload: true
+  loop:
+    - { name: 'net.bridge.bridge-nf-call-iptables', value: '1' }
+    - { name: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
+    - { name: 'net.ipv4.ip_forward', value: '1' }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# firewalld 설정
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: firewalld 상태 확인
+  systemd:
+    name: firewalld
+    state: started
+  register: firewalld_status
+  ignore_errors: true
+
+- name: firewalld에 K8s 필수 포트 추가 (Master)
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+  loop:
+    - 6443/tcp      # API Server
+    - 2379-2380/tcp # etcd
+    - 10250/tcp     # kubelet
+    - 10259/tcp     # kube-scheduler
+    - 10257/tcp     # kube-controller-manager
+  when:
+    - firewalld_status is succeeded
+    - inventory_hostname in groups['masters']
+  notify: reload-firewalld
+
+- name: firewalld에 K8s 필수 포트 추가 (Worker)
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+  loop:
+    - 10250/tcp     # kubelet
+    - 30000-32767/tcp # NodePort
+  when:
+    - firewalld_status is succeeded
+    - inventory_hostname in groups['workers']
+  notify: reload-firewalld

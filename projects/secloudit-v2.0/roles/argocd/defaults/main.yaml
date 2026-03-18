@@ -1,0 +1,9 @@
+# roles/argocd/defaults/main.yaml
+# ArgoCD 기본 변수
+
+---
+# manifest 디렉토리 경로
+argocd_manifest_dir: /opt/secloudit/manifests/argocd
+
+# TODO: ArgoCD 버전 확인 필요
+# argocd_version: ""

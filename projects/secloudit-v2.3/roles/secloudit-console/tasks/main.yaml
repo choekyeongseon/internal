@@ -1,0 +1,37 @@
+---
+# secloudit-console role: Console VM 컴포넌트 배포
+# 설치 순서 2단계
+# 컴포넌트 순서: gateway → jxgo → java-api → k8s-go → portal → admin-portal → MySQL → gitlab-runner
+
+- name: Ensure docker-compose directory exists
+  ansible.builtin.file:
+    path: "{{ docker_compose_dir }}/secloudit-console"
+    state: directory
+    mode: '0755'
+
+- name: Check if portal container is running
+  ansible.builtin.shell: docker ps --filter "name=portal" --format "{{ '{{' }}.Names{{ '}}' }}"
+  register: portal_container
+  changed_when: false
+
+- name: Template docker-compose.yaml
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: "{{ docker_compose_dir }}/secloudit-console/docker-compose.yaml"
+    mode: '0644'
+
+- name: Start Console VM containers
+  ansible.builtin.shell: docker-compose up -d
+  args:
+    chdir: "{{ docker_compose_dir }}/secloudit-console"
+  when: portal_container.stdout == ""
+
+- name: Wait for portal to be ready
+  ansible.builtin.uri:
+    url: "http://localhost:{{ portal_port }}"
+    status_code: 200
+  register: portal_health
+  until: portal_health.status == 200
+  retries: 30
+  delay: 10
+  when: portal_container.stdout == ""

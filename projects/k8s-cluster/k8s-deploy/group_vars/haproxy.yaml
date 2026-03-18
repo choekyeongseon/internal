@@ -1,0 +1,27 @@
+# group_vars/haproxy.yaml
+# HAProxy 노드 전용 변수 (포트 분기)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HAProxy 포트 설정 (secloudit_version 기반 분기)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# API Server frontend 포트
+haproxy_api_frontend_port: "{{ '26443' if secloudit_version == 'v1.5' else '6443' }}"
+
+# NodePort 포트 (HTTP/HTTPS)
+haproxy_http_nodeport: "{{ '30180' if secloudit_version == 'v1.5' else '30080' }}"
+haproxy_https_nodeport: "{{ '30181' if secloudit_version == 'v1.5' else '30443' }}"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HAProxy 설정
+# ─────────────────────────────────────────────────────────────────────────────
+
+haproxy_config_path: "/etc/haproxy/haproxy.cfg"
+
+# API Server backend 포트 (Master 노드의 kube-apiserver)
+haproxy_api_backend_port: "6443"
+
+# 통계 페이지 설정
+haproxy_stats_enabled: true
+haproxy_stats_port: "9000"
+haproxy_stats_uri: "/stats"

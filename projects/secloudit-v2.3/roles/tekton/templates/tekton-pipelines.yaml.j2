@@ -1,0 +1,34 @@
+---
+# Tekton Pipelines (패키지만 설치, 메뉴 제거)
+# 설치 순서 6단계 (in-cluster)
+# TODO: Tekton 버전 및 전체 manifest 확인 필요
+# 참고: 공식 release manifest
+# kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tekton-pipelines
+  labels:
+    app.kubernetes.io/name: tekton-pipelines
+    app.kubernetes.io/component: pipelines
+
+---
+# TODO: Tekton Pipelines 전체 리소스 추가 필요
+# 아래는 placeholder - 실제 배포 시 공식 manifest로 교체
+# 필요한 리소스:
+# - ServiceAccount
+# - ClusterRole / ClusterRoleBinding
+# - ConfigMap
+# - Deployment (controller, webhook)
+# - Service
+# - CustomResourceDefinitions (Task, TaskRun, Pipeline, PipelineRun 등)
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-pipelines-config
+  namespace: tekton-pipelines
+data:
+  # TODO: Tekton 설정값 확인 필요
+  _placeholder: "true"

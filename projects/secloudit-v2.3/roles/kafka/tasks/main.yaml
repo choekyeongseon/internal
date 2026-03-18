@@ -1,0 +1,37 @@
+---
+# kafka role: Kafka 배포 (신규)
+# 설치 순서 7단계 (in-cluster)
+
+- name: Ensure kubeconfig exists
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+  failed_when: not kubeconfig_stat.stat.exists
+
+- name: Check if Kafka namespace exists
+  ansible.builtin.shell: kubectl get namespace kafka --no-headers 2>/dev/null | wc -l
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: kafka_namespace
+  changed_when: false
+  failed_when: false
+
+- name: Template Kafka manifest
+  ansible.builtin.template:
+    src: kafka.yaml.j2
+    dest: /tmp/kafka.yaml
+    mode: '0644'
+
+- name: Apply Kafka manifest
+  ansible.builtin.shell: kubectl apply -f /tmp/kafka.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: kafka_namespace.stdout | int == 0
+
+- name: Wait for Kafka to be ready
+  ansible.builtin.shell: |
+    kubectl wait --for=condition=ready pod -l app=kafka -n kafka --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: kafka_namespace.stdout | int == 0
+  failed_when: false  # TODO: Kafka manifest 확인 후 조정

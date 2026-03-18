@@ -1,0 +1,21 @@
+# roles/harbor/templates/values.yaml.j2
+# Harbor Helm values 템플릿
+
+expose:
+  type: ingress
+  tls:
+    enabled: true
+  ingress:
+    hosts:
+      core: {{ harbor_registry }}
+
+externalURL: {{ harbor_external_url }}
+
+harborAdminPassword: {{ harbor_admin_password }}
+
+persistence:
+  enabled: true
+  persistentVolumeClaim:
+    registry:
+      storageClass: {{ harbor_storage_class }}
+      size: {{ harbor_pvc_size }}

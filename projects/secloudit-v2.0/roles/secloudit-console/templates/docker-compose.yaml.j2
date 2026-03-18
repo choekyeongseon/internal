@@ -1,0 +1,149 @@
+# docker-compose.yaml.j2
+# SECloudit v2.0 Console VM 컴포넌트
+# 구동 순서: MySQL → MongoDB → FluentD → GitLab → ChartMuseum
+#           → gitlabci-module → secloudit-console
+
+version: '3.8'
+
+services:
+  # ─────────────────────────────────────────────────────────────
+  # 1. MySQL
+  # ─────────────────────────────────────────────────────────────
+  mysql:
+    image: {{ registry_host }}/secloudit/mysql:{{ mysql_version }}
+    container_name: mysql
+    restart: always
+    ports:
+      - "{{ mysql_port }}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: {{ mysql_root_password }}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p{{ mysql_root_password }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. MongoDB
+  # ─────────────────────────────────────────────────────────────
+  mongodb:
+    image: {{ registry_host }}/secloudit/mongo:{{ mongodb_version }}
+    container_name: mongodb
+    restart: always
+    ports:
+      - "{{ mongodb_port }}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: {{ mongodb_root_password }}
+    volumes:
+      - mongodb_data:/data/db
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # ─────────────────────────────────────────────────────────────
+  # 3. FluentD Forward
+  # ─────────────────────────────────────────────────────────────
+  fluentd:
+    image: {{ registry_host }}/secloudit/fluentd:{{ fluentd_version | default('1.13') }}
+    container_name: fluentd
+    restart: always
+    ports:
+      - "{{ fluentd_forward_port }}:24224"
+      - "{{ fluentd_forward_port }}:24224/udp"
+    volumes:
+      - fluentd_data:/fluentd/log
+    depends_on:
+      - mongodb
+
+  # ─────────────────────────────────────────────────────────────
+  # 4. GitLab CE
+  # ─────────────────────────────────────────────────────────────
+  gitlab:
+    image: {{ registry_host }}/secloudit/gitlab-ce:{{ gitlab_version }}
+    container_name: gitlab
+    restart: always
+    hostname: gitlab.local
+    ports:
+      - "{{ gitlab_http_port }}:80"
+      - "{{ gitlab_https_port }}:443"
+      - "{{ gitlab_ssh_port }}:22"
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.local:{{ gitlab_http_port }}'
+        gitlab_rails['initial_root_password'] = '{{ gitlab_root_password }}'
+        # TODO: 추가 설정 필요 시 여기에 작성
+    volumes:
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+    depends_on:
+      - fluentd
+
+  # ─────────────────────────────────────────────────────────────
+  # 5. ChartMuseum
+  # ─────────────────────────────────────────────────────────────
+  chartmuseum:
+    image: {{ registry_host }}/secloudit/chartmuseum:{{ chartmuseum_version }}
+    container_name: chartmuseum
+    restart: always
+    ports:
+      - "{{ chartmuseum_port }}:8080"
+    environment:
+      STORAGE: local
+      STORAGE_LOCAL_ROOTDIR: /charts
+      BASIC_AUTH_USER: admin
+      BASIC_AUTH_PASS: {{ chartmuseum_password }}
+    volumes:
+      - chartmuseum_data:/charts
+    depends_on:
+      - gitlab
+
+  # ─────────────────────────────────────────────────────────────
+  # 6. gitlabci-module
+  # ─────────────────────────────────────────────────────────────
+  gitlabci-module:
+    image: {{ registry_host }}/secloudit/gitlabci-module:{{ secloudit_version }}
+    container_name: gitlabci-module
+    restart: always
+    ports:
+      - "{{ gitlabci_api_port }}:8093"
+      - "{{ gitlabci_metrics_port }}:9091"
+    environment:
+      GITLAB_URL: http://gitlab:80
+      # TODO: JWT secret 등 상세 설정값 확인 필요
+    depends_on:
+      - chartmuseum
+
+  # ─────────────────────────────────────────────────────────────
+  # 7. SECloudit Console
+  # ─────────────────────────────────────────────────────────────
+  secloudit-console:
+    image: {{ registry_host }}/secloudit/console:{{ secloudit_version }}
+    container_name: secloudit-console
+    restart: always
+    ports:
+      - "{{ console_port }}:9080"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: {{ mysql_root_password }}
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
+      MONGODB_USER: root
+      MONGODB_PASSWORD: {{ mongodb_root_password }}
+      ADMIN_PASSWORD: {{ secloudit_admin_password }}
+    depends_on:
+      - gitlabci-module
+
+volumes:
+  mysql_data:
+  mongodb_data:
+  fluentd_data:
+  gitlab_config:
+  gitlab_logs:
+  gitlab_data:
+  chartmuseum_data:

@@ -1,0 +1,18 @@
+# inventories/qa/hosts.yaml
+# SECloudit v1.5 QA 환경 인벤토리
+# 호스트 그룹: se-node, logging, k8s-master
+
+all:
+  children:
+    se-node:
+      hosts:
+        se-node-01:
+          ansible_host: "{{ se_node_ip }}"  # TODO: 실제 IP 확인 필요
+    logging:
+      hosts:
+        logging-01:
+          ansible_host: "{{ logging_ip }}"  # TODO: 실제 IP 확인 필요
+    k8s-master:
+      hosts:
+        k8s-master-01:
+          ansible_host: "{{ k8s_master_ip }}"  # k8s-cluster Terraform output(master_ip)

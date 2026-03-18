@@ -1,0 +1,59 @@
+---
+# SECloudit v2.3 배포 플레이북
+# 설치 순서 (변경 금지):
+# 1. innogrid-auth VM — Keycloak + MySQL
+# 2. Console VM — gateway → jxgo → java-api → k8s-go → portal → admin-portal → MySQL → gitlab-runner
+# 3. Logging VM — MongoDB → FluentD Forwarder
+# 4. Util VM — ChartMuseum → CoreDNS → DNS Agent
+# 5. in-cluster — FluentD Agent DaemonSet
+# 6. in-cluster — Tekton (패키지 설치)
+# 7. in-cluster — Kafka
+# 8. in-cluster — Alert Module
+
+- name: "1. Deploy innogrid-auth VM (Keycloak + MySQL)"
+  hosts: innogrid_auth
+  become: true
+  roles:
+    - innogrid-auth
+
+- name: "2. Deploy Console VM components"
+  hosts: console_vm
+  become: true
+  roles:
+    - secloudit-console
+
+- name: "3. Deploy Logging VM (MongoDB + FluentD Forwarder)"
+  hosts: logging_vm
+  become: true
+  roles:
+    - secloudit-logging
+
+- name: "4. Deploy Util VM (ChartMuseum + CoreDNS + DNS Agent)"
+  hosts: util_vm
+  become: true
+  roles:
+    - secloudit-util
+
+- name: "5. Deploy FluentD Agent DaemonSet"
+  hosts: k8s_master
+  become: true
+  roles:
+    - fluentd-agent
+
+- name: "6. Deploy Tekton (package only)"
+  hosts: k8s_master
+  become: true
+  roles:
+    - tekton
+
+- name: "7. Deploy Kafka"
+  hosts: k8s_master
+  become: true
+  roles:
+    - kafka
+
+- name: "8. Deploy Alert Module"
+  hosts: k8s_master
+  become: true
+  roles:
+    - alert-module

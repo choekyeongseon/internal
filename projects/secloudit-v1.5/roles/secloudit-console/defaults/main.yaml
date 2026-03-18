@@ -1,0 +1,6 @@
+# roles/secloudit-console/defaults/main.yaml
+# SECloudit Console 기본 변수
+
+---
+# compose 디렉토리 경로
+console_compose_dir: /opt/secloudit/console

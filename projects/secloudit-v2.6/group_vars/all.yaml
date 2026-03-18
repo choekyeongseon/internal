@@ -1,0 +1,32 @@
+---
+# group_vars/all.yaml
+# 공통 변수 정의
+
+# kubeconfig
+kubeconfig_path: /root/.kube/config
+
+# Registry
+harbor_registry: sample.harbor.com
+
+# Package source
+secloudit_package_repo: rnd-app.innogrid.com/inno-secloudit/secloudit-package.git
+
+# secloudit-helm 레포 (ArgoCD가 watching)
+secloudit_helm_repo: rnd-app.innogrid.com/inno-secloudit/secloudit-helm.git
+secloudit_helm_repo_url: "https://{{ secloudit_helm_repo }}"
+
+# Helm release names
+harbor_release_name: harbor
+gitlab_release_name: gitlab
+argocd_release_name: argocd
+
+# Namespaces
+harbor_namespace: harbor
+gitlab_namespace: gitlab
+argocd_namespace: argocd
+
+# Secrets (vault 참조)
+harbor_admin_password: "{{ vault_harbor_admin_password }}"
+gitlab_root_password: "{{ vault_gitlab_root_password }}"
+argocd_admin_password: "{{ vault_argocd_admin_password }}"
+gitlab_runner_token: "{{ vault_gitlab_runner_token }}"

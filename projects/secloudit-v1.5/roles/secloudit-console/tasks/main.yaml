@@ -1,0 +1,46 @@
+# roles/secloudit-console/tasks/main.yaml
+# SECloudit Console 배포 (MySQL + Console)
+# MySQL 구동 → healthcheck → SECloudit Console 구동
+
+---
+- name: podman 설치 확인
+  ansible.builtin.package:
+    name:
+      - podman
+      - podman-compose
+    state: present
+
+- name: compose 디렉토리 생성
+  ansible.builtin.file:
+    path: "{{ console_compose_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: docker-compose.yaml 템플릿 배포
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: "{{ console_compose_dir }}/docker-compose.yaml"
+    mode: '0644'
+
+- name: MySQL 컨테이너 존재 여부 확인
+  ansible.builtin.command:
+    cmd: podman ps -a --filter "name=mysql" --format "{{ '{{' }}.Names{{ '}}' }}"
+  register: mysql_container
+  changed_when: false
+  failed_when: false
+
+- name: podman-compose up -d 실행
+  ansible.builtin.command:
+    cmd: podman-compose up -d
+    chdir: "{{ console_compose_dir }}"
+  when: mysql_container.stdout == ""
+
+- name: MySQL healthcheck 대기
+  ansible.builtin.command:
+    cmd: podman exec mysql mysqladmin ping -h localhost -u root -p{{ mysql_root_password }}
+  register: mysql_health
+  until: mysql_health.rc == 0
+  retries: 30
+  delay: 5
+  changed_when: false
+  no_log: true

@@ -1,0 +1,67 @@
+# roles/istio/tasks/main.yaml
+# Istio 배포 (in-cluster)
+# 배포 순서: istio-base (CRDs) → istiod (control plane)
+
+---
+- name: kubeconfig 경로 확인
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+
+- name: kubeconfig 존재 확인
+  ansible.builtin.fail:
+    msg: "kubeconfig not found at {{ kubeconfig_path }}"
+  when: not kubeconfig_stat.stat.exists
+
+- name: manifest 디렉토리 생성
+  ansible.builtin.file:
+    path: "{{ istio_manifest_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Istio base manifest 배포
+  ansible.builtin.copy:
+    src: istio-base.yaml
+    dest: "{{ istio_manifest_dir }}/istio-base.yaml"
+    mode: '0644'
+
+- name: Istiod manifest 배포
+  ansible.builtin.copy:
+    src: istiod.yaml
+    dest: "{{ istio_manifest_dir }}/istiod.yaml"
+    mode: '0644'
+
+- name: istio-system namespace 존재 여부 확인
+  ansible.builtin.command:
+    cmd: kubectl get namespace istio-system
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: istio_ns
+  changed_when: false
+  failed_when: false
+
+- name: istio-system namespace 생성
+  ansible.builtin.command:
+    cmd: kubectl create namespace istio-system
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: istio_ns.rc != 0
+
+- name: Istio base (CRDs) 적용
+  ansible.builtin.command:
+    cmd: kubectl apply -f {{ istio_manifest_dir }}/istio-base.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Istiod 적용
+  ansible.builtin.command:
+    cmd: kubectl apply -f {{ istio_manifest_dir }}/istiod.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Istiod 배포 완료 대기
+  ansible.builtin.command:
+    cmd: kubectl wait --for=condition=Available deployment/istiod -n istio-system --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  changed_when: false

@@ -1,0 +1,60 @@
+# roles/k8s-oss/tasks/nfs_provisioner.yaml
+# NFS Subdir External Provisioner 설치
+
+---
+- name: NFS Provisioner 설치 여부 확인
+  command: kubectl get deployment nfs-subdir-external-provisioner -n nfs-provisioner
+  register: nfs_provisioner_check
+  changed_when: false
+  failed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: nfs-provisioner namespace 생성
+  command: kubectl create namespace nfs-provisioner
+  when: nfs_provisioner_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: ns_result
+  failed_when: ns_result.rc != 0 and 'already exists' not in ns_result.stderr
+
+- name: NFS Provisioner manifest 복사
+  copy:
+    src: nfs-provisioner/nfs-provisioner-{{ oss_versions.nfs_provisioner }}.yaml
+    dest: /tmp/nfs-provisioner.yaml
+    mode: '0644'
+  when: nfs_provisioner_check.rc != 0
+
+- name: NFS Provisioner manifest에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/nfs-provisioner.yaml
+    regexp: 'registry.k8s.io/sig-storage'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/sig-storage'
+  when: nfs_provisioner_check.rc != 0
+
+- name: NFS Provisioner manifest에서 NFS 서버 주소 설정
+  replace:
+    path: /tmp/nfs-provisioner.yaml
+    regexp: 'NFS_SERVER_PLACEHOLDER'
+    replace: '{{ hostvars[groups["nfs"][0]]["ansible_host"] }}'
+  when: nfs_provisioner_check.rc != 0
+
+- name: NFS Provisioner manifest 적용
+  command: kubectl apply -f /tmp/nfs-provisioner.yaml
+  when: nfs_provisioner_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: NFS Provisioner Deployment Ready 대기
+  command: kubectl rollout status deployment/nfs-subdir-external-provisioner -n nfs-provisioner --timeout=300s
+  when: nfs_provisioner_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: NFS StorageClass를 default로 설정
+  command: >
+    kubectl patch storageclass nfs-client
+    -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
+  when: nfs_provisioner_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"

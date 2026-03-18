@@ -1,0 +1,39 @@
+# group_vars/all.yaml
+# SECloudit v1.5 공통 변수
+
+# SECloudit 버전
+secloudit_version: "v1.5"
+
+# Image Registry 설정 — 기존 Harbor 사용 (별도 구축 불필요)
+registry_host: "sample.harbor.com"
+registry_port: 443
+
+# OSS 버전 (v1.5 기준)
+mysql_version: "8.0.31"
+mongodb_version: "5.0.14"
+fluentd_version: "1.13"
+tekton_pipeline_version: "0.28.3"
+tekton_triggers_version: "0.18.0"
+
+# 포트 설정
+mysql_port: 3306
+mongodb_port: 27017
+console_port: 9080
+fluentd_forward_port: 24224
+
+# 시크릿 (vault 참조)
+mysql_root_password: "{{ vault_mysql_root_password }}"
+mongodb_root_password: "{{ vault_mongodb_root_password }}"
+secloudit_admin_password: "{{ vault_secloudit_admin_password }}"
+
+# FluentD Agent 설정
+# TODO: 확인 필요
+fluent_forward_host: "{{ hostvars['logging-01']['ansible_host'] }}"
+fluent_forward_port: 24224
+cluster_divide_value: "demo"  # TODO: 클러스터 구분자 확인 필요
+
+# kubeconfig 경로
+kubeconfig_path: "/etc/kubernetes/admin.conf"
+
+# K8s Master IP — k8s-cluster Terraform output(master_ip) 값 주입
+# k8s_master_ip: "{{ lookup('env', 'K8S_MASTER_IP') }}"

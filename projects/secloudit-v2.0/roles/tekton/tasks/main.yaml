@@ -1,0 +1,69 @@
+# roles/tekton/tasks/main.yaml
+# Tekton 배포 (Pipelines + Triggers)
+# Tekton Pipelines(v0.44.0) → Tekton Triggers(v0.22.0) 순서 배포
+
+---
+- name: kubeconfig 경로 확인
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+
+- name: kubeconfig 존재 여부 검증
+  ansible.builtin.fail:
+    msg: "kubeconfig not found at {{ kubeconfig_path }}"
+  when: not kubeconfig_stat.stat.exists
+
+- name: manifest 디렉토리 생성
+  ansible.builtin.file:
+    path: "{{ tekton_manifest_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Tekton Pipelines manifest 배포
+  ansible.builtin.copy:
+    src: tekton-pipelines-v0.44.0.yaml
+    dest: "{{ tekton_manifest_dir }}/tekton-pipelines-v0.44.0.yaml"
+    mode: '0644'
+
+- name: Tekton Triggers manifest 배포
+  ansible.builtin.copy:
+    src: tekton-triggers-v0.22.0.yaml
+    dest: "{{ tekton_manifest_dir }}/tekton-triggers-v0.22.0.yaml"
+    mode: '0644'
+
+- name: tekton-pipelines namespace 존재 여부 확인
+  ansible.builtin.command:
+    cmd: kubectl get namespace tekton-pipelines
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: tekton_ns
+  changed_when: false
+  failed_when: false
+
+- name: Tekton Pipelines 적용
+  ansible.builtin.command:
+    cmd: kubectl apply -f {{ tekton_manifest_dir }}/tekton-pipelines-v0.44.0.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: tekton_ns.rc != 0
+
+- name: Tekton Pipelines 배포 완료 대기
+  ansible.builtin.command:
+    cmd: kubectl wait --for=condition=Available deployment --all -n tekton-pipelines --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  changed_when: false
+
+- name: Tekton Triggers 적용
+  ansible.builtin.command:
+    cmd: kubectl apply -f {{ tekton_manifest_dir }}/tekton-triggers-v0.22.0.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: tekton_ns.rc != 0
+
+- name: Tekton Triggers 배포 완료 대기
+  ansible.builtin.command:
+    cmd: kubectl wait --for=condition=Available deployment --all -n tekton-pipelines --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  changed_when: false

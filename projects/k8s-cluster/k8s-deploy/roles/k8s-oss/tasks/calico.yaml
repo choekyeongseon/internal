@@ -1,0 +1,38 @@
+# roles/k8s-oss/tasks/calico.yaml
+# Calico CNI 설치
+# 주의: Worker join 전에 반드시 실행해야 함
+
+---
+- name: Calico 설치 여부 확인
+  command: kubectl get daemonset calico-node -n kube-system
+  register: calico_check
+  changed_when: false
+  failed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Calico manifest 복사
+  copy:
+    src: calico/calico-{{ oss_versions.calico }}.yaml
+    dest: /tmp/calico.yaml
+    mode: '0644'
+  when: calico_check.rc != 0
+
+- name: Calico manifest에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/calico.yaml
+    regexp: 'docker.io/calico'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/calico'
+  when: calico_check.rc != 0
+
+- name: Calico manifest 적용
+  command: kubectl apply -f /tmp/calico.yaml
+  when: calico_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Calico DaemonSet Ready 대기
+  command: kubectl rollout status daemonset/calico-node -n kube-system --timeout=300s
+  when: calico_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"

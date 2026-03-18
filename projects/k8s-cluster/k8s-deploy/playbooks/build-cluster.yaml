@@ -1,0 +1,149 @@
+# playbooks/build-cluster.yaml
+# K8s 클러스터 구축 플레이북
+# 실행 순서: common → k8s-preinstall → k8s-install → k8s-init → k8s-oss
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. 공통 설정 (모든 노드)
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: 공통 호스트 설정
+  hosts: all
+  become: true
+  roles:
+    - common
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. K8s 사전 설정 (Master, Worker)
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: K8s 사전 설정
+  hosts: masters:workers
+  become: true
+  roles:
+    - k8s-preinstall
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. K8s 컴포넌트 설치 (Master, Worker)
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: K8s 컴포넌트 설치
+  hosts: masters:workers
+  become: true
+  roles:
+    - k8s-install
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. Master 초기화
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: Master 노드 초기화
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-init role 실행 (main.yaml)
+      include_role:
+        name: k8s-init
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. CNI 설치 (Calico) - Worker join 전 필수!
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: CNI (Calico) 설치
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-oss role 실행 (calico.yaml)
+      include_role:
+        name: k8s-oss
+        tasks_from: calico.yaml
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. Worker 노드 join
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: Worker 노드 join
+  hosts: workers
+  become: true
+  tasks:
+    - name: k8s-init role 실행 (join.yaml)
+      include_role:
+        name: k8s-init
+        tasks_from: join.yaml
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7. OSS 컴포넌트 설치 (Calico 이후)
+# 순서: Ingress → NFS → Metrics → Prometheus → ArgoCD → Tekton → Istio → Kafka
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: Ingress Controller 설치
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-oss role 실행 (ingress.yaml)
+      include_role:
+        name: k8s-oss
+        tasks_from: ingress.yaml
+
+- name: NFS Provisioner 설치
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-oss role 실행 (nfs_provisioner.yaml)
+      include_role:
+        name: k8s-oss
+        tasks_from: nfs_provisioner.yaml
+
+- name: Metrics Server 설치
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-oss role 실행 (metrics_server.yaml)
+      include_role:
+        name: k8s-oss
+        tasks_from: metrics_server.yaml
+
+- name: Prometheus 설치
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-oss role 실행 (prometheus.yaml)
+      include_role:
+        name: k8s-oss
+        tasks_from: prometheus.yaml
+
+- name: ArgoCD 설치
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-oss role 실행 (argocd.yaml)
+      include_role:
+        name: k8s-oss
+        tasks_from: argocd.yaml
+
+- name: Tekton 설치
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-oss role 실행 (tekton.yaml)
+      include_role:
+        name: k8s-oss
+        tasks_from: tekton.yaml
+
+- name: Istio 설치
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-oss role 실행 (istio.yaml)
+      include_role:
+        name: k8s-oss
+        tasks_from: istio.yaml
+
+- name: Kafka 설치
+  hosts: masters
+  become: true
+  tasks:
+    - name: k8s-oss role 실행 (kafka.yaml)
+      include_role:
+        name: k8s-oss
+        tasks_from: kafka.yaml

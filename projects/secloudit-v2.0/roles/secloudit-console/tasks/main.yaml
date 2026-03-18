@@ -1,0 +1,65 @@
+# roles/secloudit-console/tasks/main.yaml
+# SECloudit Console VM 배포 (7개 컴포넌트)
+# MySQL → MongoDB → FluentD Forward → GitLab → ChartMuseum
+# → gitlabci-module → secloudit-console
+
+---
+- name: Docker 설치 확인
+  ansible.builtin.package:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+
+- name: Docker 서비스 시작
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: compose 디렉토리 생성
+  ansible.builtin.file:
+    path: "{{ console_compose_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: docker-compose.yaml 템플릿 배포
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: "{{ console_compose_dir }}/docker-compose.yaml"
+    mode: '0644'
+  notify: restart docker-compose
+
+- name: MySQL 컨테이너 존재 여부 확인
+  ansible.builtin.command:
+    cmd: docker ps -a --filter "name=mysql" --format "{{ '{{' }}.Names{{ '}}' }}"
+  register: mysql_container
+  changed_when: false
+  failed_when: false
+
+- name: docker-compose up -d 실행
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ console_compose_dir }}"
+  when: mysql_container.stdout == ""
+
+- name: MySQL healthcheck 대기
+  ansible.builtin.command:
+    cmd: docker exec mysql mysqladmin ping -h localhost -u root -p{{ mysql_root_password }}
+  register: mysql_health
+  until: mysql_health.rc == 0
+  retries: 30
+  delay: 5
+  changed_when: false
+  no_log: true
+
+- name: MongoDB healthcheck 대기
+  ansible.builtin.command:
+    cmd: docker exec mongodb mongosh --eval "db.adminCommand('ping')"
+  register: mongodb_health
+  until: mongodb_health.rc == 0
+  retries: 30
+  delay: 5
+  changed_when: false

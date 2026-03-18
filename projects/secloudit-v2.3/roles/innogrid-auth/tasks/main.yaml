@@ -1,0 +1,36 @@
+---
+# innogrid-auth role: Keycloak + MySQL 배포
+# 설치 순서 1단계
+
+- name: Ensure docker-compose directory exists
+  ansible.builtin.file:
+    path: "{{ docker_compose_dir }}/innogrid-auth"
+    state: directory
+    mode: '0755'
+
+- name: Check if Keycloak container is running
+  ansible.builtin.shell: docker ps --filter "name=keycloak" --format "{{ '{{' }}.Names{{ '}}' }}"
+  register: keycloak_container
+  changed_when: false
+
+- name: Template docker-compose.yaml
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: "{{ docker_compose_dir }}/innogrid-auth/docker-compose.yaml"
+    mode: '0644'
+
+- name: Start Keycloak + MySQL containers
+  ansible.builtin.shell: docker-compose up -d
+  args:
+    chdir: "{{ docker_compose_dir }}/innogrid-auth"
+  when: keycloak_container.stdout == ""
+
+- name: Wait for Keycloak to be ready
+  ansible.builtin.uri:
+    url: "http://localhost:{{ keycloak_port }}/health/ready"
+    status_code: 200
+  register: keycloak_health
+  until: keycloak_health.status == 200
+  retries: 30
+  delay: 10
+  when: keycloak_container.stdout == ""

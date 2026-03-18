@@ -1,0 +1,5 @@
+---
+# innogrid-auth role defaults
+# Keycloak + MySQL for Keycloak
+
+innogrid_auth_compose_dir: "{{ docker_compose_dir }}/innogrid-auth"

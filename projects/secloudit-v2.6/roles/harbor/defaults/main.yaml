@@ -1,0 +1,8 @@
+---
+# roles/harbor/defaults/main.yaml
+# Harbor 기본 변수
+
+harbor_chart_version: ""  # TODO: secloudit-package 확인 필요
+harbor_storage_class: ""  # TODO: NFS or PVC 확인 필요
+harbor_pvc_size: "50Gi"
+harbor_external_url: "https://{{ harbor_registry }}"

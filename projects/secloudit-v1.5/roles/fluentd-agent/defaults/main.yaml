@@ -1,0 +1,6 @@
+# roles/fluentd-agent/defaults/main.yaml
+# FluentD Agent 기본 변수
+
+---
+# manifest 디렉토리 경로
+fluentd_manifest_dir: /opt/secloudit/manifests/fluentd

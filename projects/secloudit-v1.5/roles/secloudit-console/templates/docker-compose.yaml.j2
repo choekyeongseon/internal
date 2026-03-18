@@ -1,0 +1,42 @@
+# roles/secloudit-console/templates/docker-compose.yaml.j2
+# SECloudit Console (MySQL + Console)
+
+version: "3.8"
+
+services:
+  mysql:
+    image: {{ registry_host }}:{{ registry_port }}/secloudit/mysql:{{ mysql_version }}
+    container_name: mysql
+    restart: always
+    ports:
+      - "{{ mysql_port }}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: {{ mysql_root_password }}
+      MYSQL_DATABASE: secloudit
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p{{ mysql_root_password }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  secloudit-console:
+    image: {{ registry_host }}:{{ registry_port }}/secloudit/console:{{ secloudit_version }}
+    container_name: secloudit-console
+    restart: always
+    ports:
+      - "{{ console_port }}:9080"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: secloudit
+      DB_USER: root
+      DB_PASSWORD: {{ mysql_root_password }}
+      ADMIN_PASSWORD: {{ secloudit_admin_password }}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

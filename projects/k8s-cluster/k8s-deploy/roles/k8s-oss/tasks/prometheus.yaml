@@ -1,0 +1,52 @@
+# roles/k8s-oss/tasks/prometheus.yaml
+# Prometheus Stack 설치 (kube-prometheus-stack)
+
+---
+- name: Prometheus 설치 여부 확인
+  command: kubectl get deployment prometheus-kube-prometheus-operator -n monitoring
+  register: prometheus_check
+  changed_when: false
+  failed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: monitoring namespace 생성
+  command: kubectl create namespace monitoring
+  when: prometheus_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: ns_result
+  failed_when: ns_result.rc != 0 and 'already exists' not in ns_result.stderr
+
+- name: Prometheus manifest 복사
+  copy:
+    src: prometheus/prometheus-{{ oss_versions.prometheus }}.yaml
+    dest: /tmp/prometheus.yaml
+    mode: '0644'
+  when: prometheus_check.rc != 0
+
+- name: Prometheus manifest에서 이미지 레지스트리 변경 (quay.io)
+  replace:
+    path: /tmp/prometheus.yaml
+    regexp: 'quay.io/prometheus'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/prometheus'
+  when: prometheus_check.rc != 0
+
+- name: Prometheus manifest에서 이미지 레지스트리 변경 (docker.io)
+  replace:
+    path: /tmp/prometheus.yaml
+    regexp: 'docker.io/grafana'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/grafana'
+  when: prometheus_check.rc != 0
+
+- name: Prometheus manifest 적용
+  command: kubectl apply -f /tmp/prometheus.yaml
+  when: prometheus_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Prometheus Operator Deployment Ready 대기
+  command: kubectl rollout status deployment/prometheus-kube-prometheus-operator -n monitoring --timeout=300s
+  when: prometheus_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"

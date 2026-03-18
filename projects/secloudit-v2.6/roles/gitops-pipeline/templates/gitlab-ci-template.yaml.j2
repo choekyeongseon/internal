@@ -1,0 +1,33 @@
+# roles/gitops-pipeline/templates/gitlab-ci-template.yaml.j2
+# GitLab CI 템플릿 (secloudit-helm values.yaml 업데이트 패턴)
+# 연동 방식: docker build → harbor push → secloudit-helm values.yaml 업데이트 → ArgoCD auto-sync
+
+stages:
+  - build
+  - update-helm
+
+variables:
+  HARBOR_REGISTRY: {{ harbor_registry }}
+  SECLOUDIT_HELM_REPO: {{ secloudit_helm_repo }}
+
+build:
+  stage: build
+  script:
+    - docker build -t ${HARBOR_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHORT_SHA} .
+    - docker push ${HARBOR_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHORT_SHA}
+  only:
+    - main
+    - develop
+
+update-helm:
+  stage: update-helm
+  script:
+    - git clone https://${SECLOUDIT_HELM_REPO} secloudit-helm
+    - cd secloudit-helm/charts/${CI_PROJECT_NAME}
+    - sed -i "s/tag:.*/tag: ${CI_COMMIT_SHORT_SHA}/" values.yaml
+    - git add values.yaml
+    - git commit -m "ci: update ${CI_PROJECT_NAME} image tag to ${CI_COMMIT_SHORT_SHA}"
+    - git push origin HEAD
+  only:
+    - main
+    - develop

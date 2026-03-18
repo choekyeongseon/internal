@@ -1,0 +1,31 @@
+---
+# SECloudit v2.3 Demo Environment Inventory
+# TODO: 각 VM 실제 IP 주소 확인 필요
+
+all:
+  children:
+    innogrid_auth:
+      hosts:
+        innogrid-auth-vm:
+          ansible_host: "{{ vault_innogrid_auth_ip }}"  # TODO: 실제 IP 확인
+          ansible_user: root
+    console_vm:
+      hosts:
+        console-vm:
+          ansible_host: "{{ vault_console_vm_ip }}"  # TODO: 실제 IP 확인
+          ansible_user: root
+    logging_vm:
+      hosts:
+        logging-vm:
+          ansible_host: "{{ vault_logging_vm_ip }}"  # TODO: 실제 IP 확인
+          ansible_user: root
+    util_vm:
+      hosts:
+        util-vm:
+          ansible_host: "{{ vault_util_vm_ip }}"  # TODO: 실제 IP 확인
+          ansible_user: root
+    k8s_master:
+      hosts:
+        k8s-master:
+          ansible_host: "{{ vault_k8s_master_ip }}"  # TODO: Terraform output
+          ansible_user: root

@@ -1,0 +1,58 @@
+# roles/k8s-oss/tasks/tekton.yaml
+# Tekton Pipelines 설치
+
+---
+- name: Tekton 설치 여부 확인
+  command: kubectl get deployment tekton-pipelines-controller -n tekton-pipelines
+  register: tekton_check
+  changed_when: false
+  failed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Tekton Pipelines manifest 복사
+  copy:
+    src: tekton/tekton-pipelines-{{ oss_versions.tekton }}.yaml
+    dest: /tmp/tekton-pipelines.yaml
+    mode: '0644'
+  when: tekton_check.rc != 0
+
+- name: Tekton manifest에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/tekton-pipelines.yaml
+    regexp: 'gcr.io/tekton-releases'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/tekton-releases'
+  when: tekton_check.rc != 0
+
+- name: Tekton Pipelines manifest 적용
+  command: kubectl apply -f /tmp/tekton-pipelines.yaml
+  when: tekton_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Tekton Pipelines Controller Deployment Ready 대기
+  command: kubectl rollout status deployment/tekton-pipelines-controller -n tekton-pipelines --timeout=300s
+  when: tekton_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+# Tekton Dashboard (선택)
+- name: Tekton Dashboard manifest 복사
+  copy:
+    src: tekton/tekton-dashboard-{{ oss_versions.tekton }}.yaml
+    dest: /tmp/tekton-dashboard.yaml
+    mode: '0644'
+  when: tekton_check.rc != 0
+
+- name: Tekton Dashboard manifest에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/tekton-dashboard.yaml
+    regexp: 'gcr.io/tekton-releases'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/tekton-releases'
+  when: tekton_check.rc != 0
+
+- name: Tekton Dashboard manifest 적용
+  command: kubectl apply -f /tmp/tekton-dashboard.yaml
+  when: tekton_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"

@@ -1,0 +1,37 @@
+---
+# tekton role: Tekton Pipelines 배포 (패키지만 설치, 메뉴 제거)
+# 설치 순서 6단계 (in-cluster)
+
+- name: Ensure kubeconfig exists
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+  failed_when: not kubeconfig_stat.stat.exists
+
+- name: Check if Tekton namespace exists
+  ansible.builtin.shell: kubectl get namespace tekton-pipelines --no-headers 2>/dev/null | wc -l
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: tekton_namespace
+  changed_when: false
+  failed_when: false
+
+- name: Template Tekton Pipelines manifest
+  ansible.builtin.template:
+    src: tekton-pipelines.yaml.j2
+    dest: /tmp/tekton-pipelines.yaml
+    mode: '0644'
+
+- name: Apply Tekton Pipelines manifest
+  ansible.builtin.shell: kubectl apply -f /tmp/tekton-pipelines.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: tekton_namespace.stdout | int == 0
+
+- name: Wait for Tekton Pipelines controller to be ready
+  ansible.builtin.shell: |
+    kubectl wait --for=condition=available deployment/tekton-pipelines-controller -n tekton-pipelines --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: tekton_namespace.stdout | int == 0
+  failed_when: false  # TODO: Tekton manifest 확인 후 조정

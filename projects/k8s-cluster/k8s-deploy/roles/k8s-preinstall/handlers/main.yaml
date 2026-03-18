@@ -1,0 +1,8 @@
+# roles/k8s-preinstall/handlers/main.yaml
+# K8s preinstall handlers
+
+---
+- name: reload-firewalld
+  systemd:
+    name: firewalld
+    state: reloaded

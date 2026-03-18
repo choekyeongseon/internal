@@ -1,0 +1,12 @@
+---
+# playbooks/deploy-secloudit.yaml
+# GitOps 파이프라인 인프라 배포
+
+- name: Deploy GitOps Pipeline Infrastructure
+  hosts: k8s_master
+  become: true
+  roles:
+    - harbor
+    - gitlab
+    - argocd
+    - gitops-pipeline

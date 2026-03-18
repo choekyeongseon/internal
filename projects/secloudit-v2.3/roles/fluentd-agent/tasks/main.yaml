@@ -1,0 +1,36 @@
+---
+# fluentd-agent role: FluentD Agent DaemonSet 배포
+# 설치 순서 5단계 (in-cluster)
+
+- name: Ensure kubeconfig exists
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+  failed_when: not kubeconfig_stat.stat.exists
+
+- name: Check if FluentD DaemonSet exists
+  ansible.builtin.shell: kubectl get daemonset fluentd-agent -n kube-system --no-headers 2>/dev/null | wc -l
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: fluentd_daemonset
+  changed_when: false
+  failed_when: false
+
+- name: Template FluentD DaemonSet manifest
+  ansible.builtin.template:
+    src: fluentd-daemonset.yaml.j2
+    dest: /tmp/fluentd-daemonset.yaml
+    mode: '0644'
+
+- name: Apply FluentD DaemonSet
+  ansible.builtin.shell: kubectl apply -f /tmp/fluentd-daemonset.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: fluentd_daemonset.stdout | int == 0
+
+- name: Wait for FluentD DaemonSet to be ready
+  ansible.builtin.shell: |
+    kubectl rollout status daemonset/fluentd-agent -n kube-system --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: fluentd_daemonset.stdout | int == 0

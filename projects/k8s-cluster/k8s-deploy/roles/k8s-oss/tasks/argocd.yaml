@@ -1,0 +1,68 @@
+# roles/k8s-oss/tasks/argocd.yaml
+# ArgoCD 설치
+# 패치: 워커 3대 미만 시 podAntiAffinity 제거
+
+---
+- name: ArgoCD 설치 여부 확인
+  command: kubectl get deployment argocd-server -n argocd
+  register: argocd_check
+  changed_when: false
+  failed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: argocd namespace 생성
+  command: kubectl create namespace argocd
+  when: argocd_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: ns_result
+  failed_when: ns_result.rc != 0 and 'already exists' not in ns_result.stderr
+
+- name: ArgoCD manifest 복사
+  copy:
+    src: argocd/argocd-{{ oss_versions.argocd }}.yaml
+    dest: /tmp/argocd.yaml
+    mode: '0644'
+  when: argocd_check.rc != 0
+
+- name: ArgoCD manifest에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/argocd.yaml
+    regexp: 'quay.io/argoproj'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/argoproj'
+  when: argocd_check.rc != 0
+
+- name: ArgoCD manifest 적용
+  command: kubectl apply -n argocd -f /tmp/argocd.yaml
+  when: argocd_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+# 워커 3대 미만 시 podAntiAffinity 제거 패치
+- name: Worker 노드 수 확인
+  set_fact:
+    worker_count: "{{ groups['workers'] | length }}"
+
+- name: ArgoCD HA 컴포넌트 podAntiAffinity 제거 (워커 3대 미만)
+  command: >
+    kubectl patch deployment {{ item }} -n argocd
+    --type='json'
+    -p='[{"op": "remove", "path": "/spec/template/spec/affinity"}]'
+  loop:
+    - argocd-repo-server
+    - argocd-server
+    - argocd-applicationset-controller
+  when:
+    - argocd_check.rc != 0
+    - worker_count | int < 3
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: patch_result
+  failed_when: false
+
+- name: ArgoCD Server Deployment Ready 대기
+  command: kubectl rollout status deployment/argocd-server -n argocd --timeout=300s
+  when: argocd_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"

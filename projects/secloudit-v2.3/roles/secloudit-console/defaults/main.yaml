@@ -1,0 +1,5 @@
+---
+# secloudit-console role defaults
+# Console VM 컴포넌트: gateway, jxgo, java-api, k8s-go, portal, admin-portal, mysql, gitlab-runner
+
+secloudit_console_compose_dir: "{{ docker_compose_dir }}/secloudit-console"

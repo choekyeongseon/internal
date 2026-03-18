@@ -1,0 +1,70 @@
+# roles/k8s-init/tasks/main.yaml
+# kubeadm 클러스터 초기화 (Master)
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# kubeadm init (Master 노드)
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: kubeadm 초기화 여부 확인
+  stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeadm_init_check
+
+- name: kubeadm 설정 파일 배포
+  template:
+    src: kubeadm-config.yaml.j2
+    dest: "{{ kubeadm_config_path }}"
+    mode: '0644'
+  when: not kubeadm_init_check.stat.exists
+
+- name: kubeadm init 실행 (최초 1회)
+  command: kubeadm init --config {{ kubeadm_config_path }}
+  when: not kubeadm_init_check.stat.exists
+  register: kubeadm_init_result
+
+# ─────────────────────────────────────────────────────────────────────────────
+# kubeconfig 설정
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: .kube 디렉토리 생성
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    mode: '0755'
+
+- name: kubeconfig 복사
+  copy:
+    src: "{{ kubeconfig_path }}"
+    dest: "{{ kubeconfig_user_path }}"
+    remote_src: true
+    owner: "{{ ansible_user }}"
+    mode: '0600'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# join 토큰 생성 (Worker join용)
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: 기존 join 토큰 확인
+  command: kubeadm token list -o jsonpath='{.token}'
+  register: existing_token
+  changed_when: false
+  failed_when: false
+
+- name: join 토큰 생성 (없거나 만료된 경우)
+  command: kubeadm token create --ttl {{ kubeadm_token_ttl }}
+  register: join_token
+  when: existing_token.stdout | length == 0
+
+- name: join 토큰 설정 (기존 토큰 사용)
+  set_fact:
+    kubeadm_join_token: "{{ existing_token.stdout if existing_token.stdout | length > 0 else join_token.stdout }}"
+
+- name: CA 인증서 해시 추출
+  shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+  register: ca_cert_hash
+  changed_when: false
+
+- name: join 명령어 저장 (Worker 노드용)
+  set_fact:
+    kubeadm_join_command: "kubeadm join {{ api_server_endpoint }} --token {{ kubeadm_join_token }} --discovery-token-ca-cert-hash sha256:{{ ca_cert_hash.stdout }}"

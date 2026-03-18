@@ -1,0 +1,35 @@
+# roles/gitops-pipeline/templates/applicationset.yaml.j2
+# 브랜치별 ApplicationSet 설정 (global.branchSuffix 파라미터)
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: secloudit-apps
+  namespace: {{ argocd_namespace }}
+spec:
+  generators:
+    - git:
+        repoURL: {{ secloudit_helm_repo_url }}
+        revision: HEAD
+        directories:
+          - path: "charts/*"
+  template:
+    metadata:
+      name: '{{`{{path.basename}}`}}'
+    spec:
+      project: default
+      source:
+        repoURL: {{ secloudit_helm_repo_url }}
+        targetRevision: HEAD
+        path: '{{`{{path}}`}}'
+        helm:
+          parameters:
+            - name: global.branchSuffix
+              value: '{{`{{path.basename}}`}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{`{{path.basename}}`}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

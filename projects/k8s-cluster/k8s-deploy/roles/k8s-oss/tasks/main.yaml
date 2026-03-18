@@ -1,0 +1,41 @@
+# roles/k8s-oss/tasks/main.yaml
+# K8s OSS 컴포넌트 설치 (순서 고정)
+#
+# 설치 순서:
+# 1. Calico (CNI) - Worker join 전 필수
+# 2. Ingress NGINX
+# 3. NFS Provisioner
+# 4. Metrics Server
+# 5. Prometheus
+# 6. ArgoCD
+# 7. Tekton
+# 8. Istio
+# 9. Kafka
+
+---
+- import_tasks: calico.yaml
+  tags: [calico, cni]
+
+- import_tasks: ingress.yaml
+  tags: [ingress]
+
+- import_tasks: nfs_provisioner.yaml
+  tags: [nfs, storage]
+
+- import_tasks: metrics_server.yaml
+  tags: [metrics]
+
+- import_tasks: prometheus.yaml
+  tags: [prometheus, monitoring]
+
+- import_tasks: argocd.yaml
+  tags: [argocd, gitops]
+
+- import_tasks: tekton.yaml
+  tags: [tekton, cicd]
+
+- import_tasks: istio.yaml
+  tags: [istio, servicemesh]
+
+- import_tasks: kafka.yaml
+  tags: [kafka, messaging]

@@ -1,0 +1,6 @@
+# roles/common/handlers/main.yaml
+# 공통 handlers
+
+---
+- name: update-ca-trust
+  command: update-ca-trust extract

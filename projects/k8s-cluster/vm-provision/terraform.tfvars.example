@@ -1,0 +1,71 @@
+# terraform.tfvars.example
+# K8s 클러스터 VM 프로비저닝 변수 예시
+# 사용법: environments/{환경}/terraform.tfvars 에 복사 후 값 수정
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 클러스터 식별
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 클러스터 이름 (리소스 prefix로 사용)
+# QA 환경에서는 workspace 이름이 클러스터 이름으로 사용됨
+cluster_name = "my-k8s"
+
+# SECloudit 버전 (필수)
+# 가능한 값: v1.5 / v2.0 / v2.3 / v2.6
+secloudit_version = "v2.0"
+
+# 클러스터 타입
+# 가능한 값: all-in-one / separated
+cluster_type = "separated"
+
+# Jira 티켓 ID (QA 환경에서만 사용)
+# workspace 네이밍과 함께 사용: qa-{jira_ticket_id}
+jira_ticket_id = "ST-42"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 노드 수
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 마스터 노드 수 (싱글 마스터: 1)
+master_count = 1
+
+# 워커 노드 수
+worker_count = 3
+
+# HAProxy 노드 수
+haproxy_count = 1
+
+# NFS 노드 수
+nfs_count = 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OpenStack 리소스 설정
+# 아래 값들은 환경에 맞게 수정 필요
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Flavor 이름 (OpenStack에서 조회: openstack flavor list)
+flavor_master  = "m1.large"
+flavor_worker  = "m1.large"
+flavor_haproxy = "m1.medium"
+flavor_nfs     = "m1.medium"
+
+# VM 이미지 이름 (OpenStack에서 조회: openstack image list)
+image_name = "Rocky-9-x86_64"
+
+# 네트워크 이름 (OpenStack에서 조회: openstack network list)
+network_name = "private-net"
+
+# SSH 키페어 이름 (OpenStack에서 조회: openstack keypair list)
+keypair_name = "my-keypair"
+
+# 보안 그룹 목록
+security_groups = ["default"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 태그
+# ─────────────────────────────────────────────────────────────────────────────
+
+tags = {
+  project = "secloudit"
+  owner   = "platform-team"
+}

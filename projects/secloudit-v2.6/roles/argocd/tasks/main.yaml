@@ -1,0 +1,80 @@
+---
+# roles/argocd/tasks/main.yaml
+# ArgoCD 설치 + App of Apps 설정 태스크
+
+- name: kubeconfig 경로 확인
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+
+- name: kubeconfig 존재 확인
+  ansible.builtin.fail:
+    msg: "kubeconfig not found at {{ kubeconfig_path }}"
+  when: not kubeconfig_stat.stat.exists
+
+- name: ArgoCD namespace 생성
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ argocd_namespace }}"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: ArgoCD Helm 릴리즈 존재 확인
+  ansible.builtin.command:
+    cmd: helm status {{ argocd_release_name }} -n {{ argocd_namespace }}
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: argocd_status
+  changed_when: false
+  failed_when: false
+
+- name: ArgoCD values 템플릿 생성
+  ansible.builtin.template:
+    src: values.yaml.j2
+    dest: /tmp/argocd-values.yaml
+    mode: '0600'
+  when: argocd_status.rc != 0
+
+- name: ArgoCD Helm 설치
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install {{ argocd_release_name }}
+      argo/argo-cd
+      -n {{ argocd_namespace }}
+      -f /tmp/argocd-values.yaml
+      --wait --timeout 10m
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: argocd_status.rc != 0
+
+- name: ArgoCD 배포 완료 대기
+  ansible.builtin.command:
+    cmd: kubectl wait --for=condition=Available deployment --all -n {{ argocd_namespace }} --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  changed_when: false
+
+- name: App of Apps manifest 생성
+  ansible.builtin.template:
+    src: app-of-apps.yaml.j2
+    dest: /tmp/app-of-apps.yaml
+    mode: '0644'
+
+- name: App of Apps 적용
+  kubernetes.core.k8s:
+    state: present
+    src: /tmp/app-of-apps.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: ArgoCD 임시파일 삭제
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/argocd-values.yaml
+    - /tmp/app-of-apps.yaml

@@ -1,0 +1,29 @@
+# group_vars/masters.yaml
+# Master 노드 전용 변수 (kubeadm 설정)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 네트워크 CIDR 설정
+# ─────────────────────────────────────────────────────────────────────────────
+
+pod_cidr: "10.244.0.0/16"
+service_cidr: "10.96.0.0/12"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API Server 설정
+# ─────────────────────────────────────────────────────────────────────────────
+
+# HAProxy를 통한 API Server 접근
+# secloudit_version에 따라 포트 분기 (v1.5: 26443, 그 외: 6443)
+api_server_port: "{{ '26443' if secloudit_version == 'v1.5' else '6443' }}"
+api_server_endpoint: "{{ hostvars[groups['haproxy'][0]]['ansible_host'] }}:{{ api_server_port }}"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# kubeadm 설정
+# ─────────────────────────────────────────────────────────────────────────────
+
+kubeadm_config_path: "/etc/kubernetes/kubeadm-config.yaml"
+kubeadm_token_ttl: "24h"
+
+# kubeconfig 경로
+kubeconfig_path: "/etc/kubernetes/admin.conf"
+kubeconfig_user_path: "{{ ansible_env.HOME }}/.kube/config"

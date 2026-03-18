@@ -1,0 +1,34 @@
+# templates/kubeadm-config.yaml.j2
+# kubeadm ClusterConfiguration 템플릿
+
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: {{ ansible_default_ipv4.address }}
+  bindPort: 6443
+nodeRegistration:
+  criSocket: unix:///var/run/crio/crio.sock
+  name: {{ inventory_hostname }}
+
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+kubernetesVersion: v{{ k8s_version }}
+controlPlaneEndpoint: {{ api_server_endpoint }}
+networking:
+  podSubnet: {{ pod_cidr }}
+  serviceSubnet: {{ service_cidr }}
+apiServer:
+  certSANs:
+    - {{ ansible_default_ipv4.address }}
+    - {{ inventory_hostname }}
+    - {{ hostvars[groups['haproxy'][0]]['ansible_host'] }}
+    - 127.0.0.1
+    - localhost
+imageRepository: {{ harbor_registry }}/{{ harbor_project }}
+
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd

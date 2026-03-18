@@ -1,0 +1,57 @@
+---
+# roles/harbor/tasks/main.yaml
+# Harbor 설치 태스크
+
+- name: kubeconfig 경로 확인
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+
+- name: kubeconfig 존재 확인
+  ansible.builtin.fail:
+    msg: "kubeconfig not found at {{ kubeconfig_path }}"
+  when: not kubeconfig_stat.stat.exists
+
+- name: Harbor namespace 생성
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ harbor_namespace }}"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Harbor Helm 릴리즈 존재 확인
+  ansible.builtin.command:
+    cmd: helm status {{ harbor_release_name }} -n {{ harbor_namespace }}
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: harbor_status
+  changed_when: false
+  failed_when: false
+
+- name: Harbor values 템플릿 생성
+  ansible.builtin.template:
+    src: values.yaml.j2
+    dest: /tmp/harbor-values.yaml
+    mode: '0600'
+  when: harbor_status.rc != 0
+
+- name: Harbor Helm 설치
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install {{ harbor_release_name }}
+      harbor/harbor
+      -n {{ harbor_namespace }}
+      -f /tmp/harbor-values.yaml
+      --wait --timeout 10m
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: harbor_status.rc != 0
+
+- name: Harbor values 임시파일 삭제
+  ansible.builtin.file:
+    path: /tmp/harbor-values.yaml
+    state: absent

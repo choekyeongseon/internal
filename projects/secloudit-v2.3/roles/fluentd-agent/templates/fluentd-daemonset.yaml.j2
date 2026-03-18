@@ -1,0 +1,60 @@
+---
+# FluentD Agent DaemonSet
+# 설치 순서 5단계 (in-cluster)
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-agent
+  namespace: kube-system
+  labels:
+    app: fluentd-agent
+    app.kubernetes.io/name: fluentd-agent
+    app.kubernetes.io/component: logging
+spec:
+  selector:
+    matchLabels:
+      app: fluentd-agent
+  template:
+    metadata:
+      labels:
+        app: fluentd-agent
+    spec:
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+      containers:
+        - name: fluentd
+          image: {{ image_registry }}/fluent/fluentd:latest  # TODO: 버전 확인
+          env:
+            - name: FLUENT_FORWARD_HOST
+              value: "{{ vault_fluentd_forward_host | default('logging-vm') }}"  # TODO: 확인 필요
+            - name: FLUENT_FORWARD_PORT
+              value: "{{ fluentd_port | default('24224') }}"
+          resources:
+            limits:
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 200Mi
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+            - name: fluentd-config
+              mountPath: /fluentd/etc
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: fluentd-config
+          configMap:
+            name: fluentd-config
+            optional: true

@@ -1,0 +1,5 @@
+---
+# secloudit-util role defaults
+# ChartMuseum + CoreDNS + DNS Agent
+
+secloudit_util_compose_dir: "{{ docker_compose_dir }}/secloudit-util"

@@ -1,0 +1,5 @@
+---
+# fluentd-agent role defaults
+# FluentD Agent DaemonSet (in-cluster)
+
+fluentd_agent_namespace: kube-system

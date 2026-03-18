@@ -1,0 +1,9 @@
+# roles/istio/defaults/main.yaml
+# Istio 기본 변수
+
+---
+# manifest 디렉토리 경로
+istio_manifest_dir: /opt/secloudit/manifests/istio
+
+# TODO: Istio 버전 확인 필요
+# istio_version: ""

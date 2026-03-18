@@ -1,0 +1,56 @@
+# playbooks/deploy-secloudit.yaml
+# SECloudit v2.0 배포 플레이북
+# 실행 순서: Console VM → FluentD Agent → ArgoCD → Tekton → Istio
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. Console VM — docker-compose 전체 컴포넌트 구동
+#    MySQL → MongoDB → FluentD Forward → GitLab → ChartMuseum
+#    → gitlabci-module → secloudit-console
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: Console VM 배포
+  hosts: console-vm
+  become: true
+  roles:
+    - secloudit-console
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. in-cluster — FluentD Agent DaemonSet
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: FluentD Agent 배포
+  hosts: k8s-master
+  become: true
+  roles:
+    - fluentd-agent
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. in-cluster — ArgoCD
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: ArgoCD 배포
+  hosts: k8s-master
+  become: true
+  roles:
+    - argocd
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. in-cluster — Tekton (Pipelines + Triggers)
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: Tekton 배포
+  hosts: k8s-master
+  become: true
+  roles:
+    - tekton
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. in-cluster — Istio
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: Istio 배포
+  hosts: k8s-master
+  become: true
+  roles:
+    - istio

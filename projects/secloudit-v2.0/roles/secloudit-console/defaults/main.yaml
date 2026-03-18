@@ -1,0 +1,9 @@
+# roles/secloudit-console/defaults/main.yaml
+# SECloudit Console 기본 변수
+
+---
+# compose 디렉토리 경로
+console_compose_dir: /opt/secloudit/console
+
+# FluentD 버전 (group_vars에서 오버라이드 가능)
+fluentd_version: "1.13"

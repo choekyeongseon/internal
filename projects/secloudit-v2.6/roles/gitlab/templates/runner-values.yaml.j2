@@ -1,0 +1,8 @@
+# roles/gitlab/templates/runner-values.yaml.j2
+# GitLab Runner Helm values 템플릿
+
+gitlabUrl: {{ gitlab_external_url }}
+runnerRegistrationToken: {{ gitlab_runner_token }}
+
+runners:
+  executor: {{ gitlab_runner_executor }}

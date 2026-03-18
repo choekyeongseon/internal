@@ -1,0 +1,21 @@
+# roles/argocd/templates/app-of-apps.yaml.j2
+# App of Apps 루트 애플리케이션 정의
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-of-apps
+  namespace: {{ argocd_namespace }}
+spec:
+  project: default
+  source:
+    repoURL: {{ argocd_app_of_apps_repo }}
+    targetRevision: HEAD
+    path: {{ argocd_app_of_apps_path }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ argocd_namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -1,0 +1,10 @@
+---
+# roles/gitops-pipeline/defaults/main.yaml
+# GitOps Pipeline 연동 변수
+
+# 연동 방식: polling (GitLab CI가 secloudit-helm push → ArgoCD auto-sync)
+gitlab_argocd_sync_method: "polling"
+
+# secloudit-helm 레포 (ArgoCD가 watching)
+secloudit_helm_repo: "rnd-app.innogrid.com/inno-secloudit/secloudit-helm.git"
+secloudit_helm_repo_url: "https://{{ secloudit_helm_repo }}"

@@ -1,0 +1,38 @@
+# roles/fluentd-agent/tasks/main.yaml
+# FluentD Agent DaemonSet 배포 (in-cluster)
+
+---
+- name: kubeconfig 경로 확인
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+
+- name: kubeconfig 존재 확인
+  ansible.builtin.fail:
+    msg: "kubeconfig not found at {{ kubeconfig_path }}"
+  when: not kubeconfig_stat.stat.exists
+
+- name: manifest 디렉토리 생성
+  ansible.builtin.file:
+    path: "{{ fluentd_manifest_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: fluentd-agent.yaml 템플릿 배포
+  ansible.builtin.template:
+    src: fluentd-agent.yaml.j2
+    dest: "{{ fluentd_manifest_dir }}/fluentd-agent.yaml"
+    mode: '0644'
+
+- name: FluentD Agent DaemonSet 배포
+  ansible.builtin.command:
+    cmd: kubectl apply -f {{ fluentd_manifest_dir }}/fluentd-agent.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: DaemonSet 상태 확인
+  ansible.builtin.command:
+    cmd: kubectl rollout status daemonset/fluentd-agent -n kube-system --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  changed_when: false

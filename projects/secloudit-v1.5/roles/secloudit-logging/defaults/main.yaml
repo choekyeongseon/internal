@@ -1,0 +1,6 @@
+# roles/secloudit-logging/defaults/main.yaml
+# SECloudit Logging 기본 변수
+
+---
+# compose 디렉토리 경로
+logging_compose_dir: /opt/secloudit/logging

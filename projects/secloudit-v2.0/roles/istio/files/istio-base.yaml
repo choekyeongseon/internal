@@ -1,0 +1,37 @@
+# Istio Base (CRDs) Manifest
+# TODO: Istio 버전 확인 후 실제 manifest로 교체 필요
+# 원본: istioctl manifest generate --set profile=default --component base
+#
+# 이 파일은 placeholder입니다.
+# 실제 배포 전 아래 단계 수행:
+# 1. Istio 버전 확정 (예: 1.18.x, 1.19.x)
+# 2. istioctl로 manifest 생성 또는 공식 release에서 다운로드
+# 3. 이미지 주소를 내부 레지스트리로 치환
+# 4. 이 파일 교체
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-system
+  labels:
+    istio-injection: disabled
+
+# TODO: 실제 Istio base manifest 내용으로 교체
+# 포함 리소스:
+# - CustomResourceDefinitions (VirtualService, DestinationRule, Gateway 등)
+# - ClusterRole, ClusterRoleBinding
+# - ValidatingWebhookConfiguration, MutatingWebhookConfiguration
+#
+# Istio CRDs 목록:
+# - authorizationpolicies.security.istio.io
+# - destinationrules.networking.istio.io
+# - envoyfilters.networking.istio.io
+# - gateways.networking.istio.io
+# - peerauthentications.security.istio.io
+# - requestauthentications.security.istio.io
+# - serviceentries.networking.istio.io
+# - sidecars.networking.istio.io
+# - virtualservices.networking.istio.io
+# - workloadentries.networking.istio.io
+# - workloadgroups.networking.istio.io

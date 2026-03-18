@@ -1,0 +1,67 @@
+# roles/k8s-oss/tasks/kafka.yaml
+# Kafka (Strimzi Operator) 설치
+
+---
+- name: Kafka 설치 여부 확인
+  command: kubectl get deployment strimzi-cluster-operator -n kafka
+  register: kafka_check
+  changed_when: false
+  failed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: kafka namespace 생성
+  command: kubectl create namespace kafka
+  when: kafka_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: ns_result
+  failed_when: ns_result.rc != 0 and 'already exists' not in ns_result.stderr
+
+# Strimzi Operator
+- name: Strimzi Operator manifest 복사
+  copy:
+    src: kafka/strimzi-operator-{{ oss_versions.kafka }}.yaml
+    dest: /tmp/strimzi-operator.yaml
+    mode: '0644'
+  when: kafka_check.rc != 0
+
+- name: Strimzi Operator manifest에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/strimzi-operator.yaml
+    regexp: 'quay.io/strimzi'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/strimzi'
+  when: kafka_check.rc != 0
+
+- name: Strimzi Operator manifest 적용
+  command: kubectl apply -f /tmp/strimzi-operator.yaml -n kafka
+  when: kafka_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Strimzi Operator Deployment Ready 대기
+  command: kubectl rollout status deployment/strimzi-cluster-operator -n kafka --timeout=300s
+  when: kafka_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+# Kafka Cluster CR (Custom Resource)
+- name: Kafka Cluster CR 복사
+  copy:
+    src: kafka/kafka-cluster.yaml
+    dest: /tmp/kafka-cluster.yaml
+    mode: '0644'
+  when: kafka_check.rc != 0
+
+- name: Kafka Cluster CR에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/kafka-cluster.yaml
+    regexp: 'quay.io/strimzi'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/strimzi'
+  when: kafka_check.rc != 0
+
+- name: Kafka Cluster CR 적용
+  command: kubectl apply -f /tmp/kafka-cluster.yaml -n kafka
+  when: kafka_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"

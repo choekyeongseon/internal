@@ -1,0 +1,8 @@
+# roles/secloudit-console/handlers/main.yaml
+# SECloudit Console 핸들러
+
+---
+- name: restart docker-compose
+  ansible.builtin.command:
+    cmd: docker compose restart
+    chdir: "{{ console_compose_dir }}"

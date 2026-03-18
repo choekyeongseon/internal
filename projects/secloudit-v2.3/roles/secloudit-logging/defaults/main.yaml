@@ -1,0 +1,5 @@
+---
+# secloudit-logging role defaults
+# MongoDB + FluentD Forwarder
+
+secloudit_logging_compose_dir: "{{ docker_compose_dir }}/secloudit-logging"

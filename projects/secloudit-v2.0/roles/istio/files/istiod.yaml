@@ -1,0 +1,41 @@
+# Istiod (Control Plane) Manifest
+# TODO: Istio 버전 확인 후 실제 manifest로 교체 필요
+# 원본: istioctl manifest generate --set profile=default --component pilot
+#
+# 이 파일은 placeholder입니다.
+# 실제 배포 전 아래 단계 수행:
+# 1. Istio 버전 확정 (예: 1.18.x, 1.19.x)
+# 2. istioctl로 manifest 생성 또는 공식 release에서 다운로드
+# 3. 이미지 주소를 내부 레지스트리로 치환
+# 4. 이 파일 교체
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: istiod
+  namespace: istio-system
+  labels:
+    app: istiod
+    istio: pilot
+
+# TODO: 실제 Istiod manifest 내용으로 교체
+# 포함 리소스:
+# - ServiceAccount
+# - ClusterRole, ClusterRoleBinding
+# - ConfigMap (istio, istio-sidecar-injector)
+# - Deployment (istiod)
+# - Service (istiod)
+# - HorizontalPodAutoscaler
+# - PodDisruptionBudget
+#
+# 이미지 목록 (치환 대상):
+# - docker.io/istio/pilot:버전
+# - docker.io/istio/proxyv2:버전
+#
+# 설정 가능 항목:
+# - pilot.resources (CPU/Memory limits)
+# - pilot.replicaCount
+# - pilot.autoscaleEnabled
+# - meshConfig.accessLogFile
+# - meshConfig.enableTracing

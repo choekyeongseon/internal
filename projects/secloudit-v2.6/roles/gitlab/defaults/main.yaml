@@ -1,0 +1,8 @@
+---
+# roles/gitlab/defaults/main.yaml
+# GitLab 기본 변수
+
+gitlab_chart_version: ""  # TODO: secloudit-package 확인 필요
+gitlab_runner_chart_version: ""  # TODO: secloudit-package 확인 필요
+gitlab_external_url: ""  # TODO: 확인 필요
+gitlab_runner_executor: ""  # TODO: docker or kubernetes 확인 필요

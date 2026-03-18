@@ -1,0 +1,81 @@
+# roles/k8s-oss/tasks/istio.yaml
+# Istio Service Mesh 설치
+
+---
+- name: Istio 설치 여부 확인
+  command: kubectl get deployment istiod -n istio-system
+  register: istio_check
+  changed_when: false
+  failed_when: false
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: istio-system namespace 생성
+  command: kubectl create namespace istio-system
+  when: istio_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: ns_result
+  failed_when: ns_result.rc != 0 and 'already exists' not in ns_result.stderr
+
+# Istio Base (CRDs)
+- name: Istio Base manifest 복사
+  copy:
+    src: istio/istio-base-{{ oss_versions.istio }}.yaml
+    dest: /tmp/istio-base.yaml
+    mode: '0644'
+  when: istio_check.rc != 0
+
+- name: Istio Base manifest 적용
+  command: kubectl apply -f /tmp/istio-base.yaml
+  when: istio_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+# Istiod (Control Plane)
+- name: Istiod manifest 복사
+  copy:
+    src: istio/istiod-{{ oss_versions.istio }}.yaml
+    dest: /tmp/istiod.yaml
+    mode: '0644'
+  when: istio_check.rc != 0
+
+- name: Istiod manifest에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/istiod.yaml
+    regexp: 'docker.io/istio'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/istio'
+  when: istio_check.rc != 0
+
+- name: Istiod manifest 적용
+  command: kubectl apply -f /tmp/istiod.yaml
+  when: istio_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Istiod Deployment Ready 대기
+  command: kubectl rollout status deployment/istiod -n istio-system --timeout=300s
+  when: istio_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+# Istio Ingress Gateway
+- name: Istio Ingress Gateway manifest 복사
+  copy:
+    src: istio/istio-ingress-{{ oss_versions.istio }}.yaml
+    dest: /tmp/istio-ingress.yaml
+    mode: '0644'
+  when: istio_check.rc != 0
+
+- name: Istio Ingress Gateway manifest에서 이미지 레지스트리 변경
+  replace:
+    path: /tmp/istio-ingress.yaml
+    regexp: 'docker.io/istio'
+    replace: '{{ harbor_registry }}/{{ harbor_project }}/istio'
+  when: istio_check.rc != 0
+
+- name: Istio Ingress Gateway manifest 적용
+  command: kubectl apply -f /tmp/istio-ingress.yaml
+  when: istio_check.rc != 0
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"

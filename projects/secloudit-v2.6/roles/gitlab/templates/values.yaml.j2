@@ -1,0 +1,14 @@
+# roles/gitlab/templates/values.yaml.j2
+# GitLab Helm values 템플릿
+
+global:
+  hosts:
+    domain: {{ gitlab_external_url }}
+  initialRootPassword:
+    secret: gitlab-initial-root-password
+
+certmanager:
+  install: false
+
+nginx-ingress:
+  enabled: false

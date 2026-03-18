@@ -1,0 +1,36 @@
+---
+# secloudit-util role: ChartMuseum + CoreDNS + DNS Agent 배포
+# 설치 순서 4단계
+
+- name: Ensure docker-compose directory exists
+  ansible.builtin.file:
+    path: "{{ docker_compose_dir }}/secloudit-util"
+    state: directory
+    mode: '0755'
+
+- name: Check if ChartMuseum container is running
+  ansible.builtin.shell: docker ps --filter "name=chartmuseum" --format "{{ '{{' }}.Names{{ '}}' }}"
+  register: chartmuseum_container
+  changed_when: false
+
+- name: Template docker-compose.yaml
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: "{{ docker_compose_dir }}/secloudit-util/docker-compose.yaml"
+    mode: '0644'
+
+- name: Start Util VM containers
+  ansible.builtin.shell: docker-compose up -d
+  args:
+    chdir: "{{ docker_compose_dir }}/secloudit-util"
+  when: chartmuseum_container.stdout == ""
+
+- name: Wait for ChartMuseum to be ready
+  ansible.builtin.uri:
+    url: "http://localhost:{{ chartmuseum_port }}/health"
+    status_code: 200
+  register: chartmuseum_health
+  until: chartmuseum_health.status == 200
+  retries: 30
+  delay: 10
+  when: chartmuseum_container.stdout == ""

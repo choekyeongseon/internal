@@ -1,0 +1,92 @@
+---
+# roles/gitlab/tasks/main.yaml
+# GitLab + Runner 설치 태스크
+
+- name: kubeconfig 경로 확인
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+
+- name: kubeconfig 존재 확인
+  ansible.builtin.fail:
+    msg: "kubeconfig not found at {{ kubeconfig_path }}"
+  when: not kubeconfig_stat.stat.exists
+
+- name: GitLab namespace 생성
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ gitlab_namespace }}"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: GitLab root password secret 생성
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: gitlab-initial-root-password
+        namespace: "{{ gitlab_namespace }}"
+      type: Opaque
+      stringData:
+        password: "{{ gitlab_root_password }}"
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: GitLab Helm 릴리즈 존재 확인
+  ansible.builtin.command:
+    cmd: helm status {{ gitlab_release_name }} -n {{ gitlab_namespace }}
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: gitlab_status
+  changed_when: false
+  failed_when: false
+
+- name: GitLab values 템플릿 생성
+  ansible.builtin.template:
+    src: values.yaml.j2
+    dest: /tmp/gitlab-values.yaml
+    mode: '0600'
+  when: gitlab_status.rc != 0
+
+- name: GitLab Helm 설치
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install {{ gitlab_release_name }}
+      gitlab/gitlab
+      -n {{ gitlab_namespace }}
+      -f /tmp/gitlab-values.yaml
+      --wait --timeout 15m
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: gitlab_status.rc != 0
+
+- name: GitLab Runner values 템플릿 생성
+  ansible.builtin.template:
+    src: runner-values.yaml.j2
+    dest: /tmp/gitlab-runner-values.yaml
+    mode: '0600'
+
+- name: GitLab Runner Helm 설치
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade --install gitlab-runner
+      gitlab/gitlab-runner
+      -n {{ gitlab_namespace }}
+      -f /tmp/gitlab-runner-values.yaml
+      --wait --timeout 5m
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: GitLab 임시파일 삭제
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/gitlab-values.yaml
+    - /tmp/gitlab-runner-values.yaml

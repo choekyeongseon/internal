@@ -1,0 +1,7 @@
+---
+# tekton role defaults
+# Tekton Pipelines (in-cluster, 패키지만 설치)
+
+tekton_namespace: tekton-pipelines
+# TODO: Tekton 버전 확인 필요
+# tekton_version: "latest"

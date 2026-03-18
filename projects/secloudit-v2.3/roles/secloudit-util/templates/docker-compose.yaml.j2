@@ -1,0 +1,47 @@
+version: '3.8'
+# secloudit-util: ChartMuseum + CoreDNS + DNS Agent
+# 설치 순서 4단계
+
+services:
+  chartmuseum:
+    image: {{ image_registry }}/chartmuseum/chartmuseum:latest  # TODO: 버전 확인
+    container_name: chartmuseum
+    environment:
+      BASIC_AUTH_USER: admin
+      BASIC_AUTH_PASS: {{ vault_chartmuseum_password }}
+      STORAGE: local
+      STORAGE_LOCAL_ROOTDIR: /charts
+      DISABLE_API: "false"
+    ports:
+      - "{{ chartmuseum_port }}:8080"
+    volumes:
+      - chartmuseum-data:/charts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  coredns:
+    image: {{ image_registry }}/coredns/coredns:latest  # TODO: 버전 확인
+    container_name: coredns
+    # TODO: CoreDNS 설정값 확인 필요
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - coredns-config:/etc/coredns
+    restart: unless-stopped
+
+  dns-agent:
+    image: {{ image_registry }}/secloudit/dns-agent:latest  # TODO: 버전 확인
+    container_name: dns-agent
+    # TODO: DNS Agent 설정값 확인 필요
+    depends_on:
+      - coredns
+    restart: unless-stopped
+
+volumes:
+  chartmuseum-data:
+  coredns-config:

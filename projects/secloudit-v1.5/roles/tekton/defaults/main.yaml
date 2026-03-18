@@ -1,0 +1,10 @@
+# roles/tekton/defaults/main.yaml
+# Tekton 기본 변수
+
+---
+# manifest 디렉토리 경로
+tekton_manifest_dir: /opt/secloudit/manifests/tekton
+
+# Tekton 버전
+tekton_pipelines_version: "0.28.3"
+tekton_triggers_version: "0.18.0"

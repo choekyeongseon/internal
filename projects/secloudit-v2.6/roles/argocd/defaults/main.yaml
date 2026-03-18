@@ -1,0 +1,8 @@
+---
+# roles/argocd/defaults/main.yaml
+# ArgoCD 기본 변수
+
+argocd_chart_version: ""  # TODO: secloudit-package 확인 필요
+argocd_server_url: ""  # TODO: 확인 필요
+argocd_app_of_apps_repo: "{{ secloudit_helm_repo_url }}"
+argocd_app_of_apps_path: "."  # secloudit-helm 레포 최상단

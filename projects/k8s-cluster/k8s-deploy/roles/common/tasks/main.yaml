@@ -1,0 +1,45 @@
+# roles/common/tasks/main.yaml
+# 공통 호스트 설정: hostname, /etc/hosts, Harbor CA trust
+
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# hostname 설정
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: hostname 설정
+  hostname:
+    name: "{{ inventory_hostname }}"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# /etc/hosts 구성
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: /etc/hosts에 클러스터 노드 등록
+  blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} K8S CLUSTER HOSTS"
+    block: |
+      {% for host in groups['all'] %}
+      {{ hostvars[host]['ansible_host'] }} {{ host }}
+      {% endfor %}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Harbor CA trust 등록 (폐쇄망 레지스트리)
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: Harbor CA 인증서 디렉토리 생성
+  file:
+    path: /etc/pki/ca-trust/source/anchors
+    state: directory
+    mode: '0755'
+
+- name: Harbor CA 인증서 복사
+  copy:
+    src: harbor-ca.crt
+    dest: /etc/pki/ca-trust/source/anchors/harbor-ca.crt
+    mode: '0644'
+  notify: update-ca-trust
+
+# ─────────────────────────────────────────────────────────────────────────────
+# handlers
+# ─────────────────────────────────────────────────────────────────────────────

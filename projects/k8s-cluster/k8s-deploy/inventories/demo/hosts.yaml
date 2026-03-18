@@ -1,0 +1,32 @@
+# inventories/demo/hosts.yaml
+# Demo 환경 호스트 인벤토리
+# TODO: Terraform output 연동하여 IP 주소 자동 설정
+
+all:
+  children:
+    haproxy:
+      hosts:
+        haproxy-01:
+          ansible_host: "{{ haproxy_ip }}"  # TODO: Terraform output 연동
+    masters:
+      hosts:
+        master-01:
+          ansible_host: "{{ master_ip }}"  # TODO: Terraform output 연동
+    workers:
+      hosts:
+        worker-01:
+          ansible_host: "{{ worker_ips[0] }}"  # TODO: Terraform output 연동
+        worker-02:
+          ansible_host: "{{ worker_ips[1] }}"  # TODO: Terraform output 연동
+        worker-03:
+          ansible_host: "{{ worker_ips[2] }}"  # TODO: Terraform output 연동
+    nfs:
+      hosts:
+        nfs-01:
+          ansible_host: "{{ nfs_ip }}"  # TODO: Terraform output 연동
+
+  vars:
+    ansible_user: rocky
+    ansible_ssh_private_key_file: ~/.ssh/demo-keypair.pem
+    ansible_become: true
+    ansible_become_method: sudo

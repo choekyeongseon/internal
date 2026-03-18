@@ -1,0 +1,6 @@
+project,repository,tag,digest,size_mb,push_time,pull_time,status
+2fauth,secloudit-2fauth,v1.0.0,sha256:325a830464f4bdcceeb8a3955eee71ce8b5b771d4e3a2b08aad0f2be38e2a498,33,2024-06-19T08:31:30.303Z,2025-10-14T23:29:36.542Z,migrate
+ai-platform,mlflow-auth-sidecar,latest,sha256:ccd3bb6ff04dc5c69487d5a01b5339078fad2f8da68bb38c6523086fdbb4a154,52,2026-03-16T00:43:32.493Z,2026-03-16T01:35:17.349Z,migrate
+ai-platform,orchestration-service,ct-v3,sha256:dd3521a4f9bae92458849b397c324340bd5b7938a6af415592b96c911af5cb01,137,2026-03-10T02:06:32.270Z,2026-03-10T02:06:35.905Z,migrate
+ai-platform,orchestration-service,ct-v2,sha256:b897803a21707afe4dfdecb1b7ddbc65a4df8ae451a5dbfd082986ccd57e0c96,137,2026-03-09T10:20:14.997Z,2026-03-09T10:20:19.320Z,migrate
+ai-platform,orchestration-service,ct-v1,sha256:f6205d7b4fa71a032fcba5812e13d8ff1188aee582f388c5f0cd3069e93b32f0,137,2026-03-09T10:11:45.761Z,2026-03-09T10:13:12.833Z,migrate

@@ -1,0 +1,36 @@
+# roles/secloudit-logging/tasks/main.yaml
+# SECloudit Logging 배포 (MongoDB + FluentD Forward)
+# MongoDB 구동 → FluentD Forward 구동
+
+---
+- name: podman 설치 확인
+  ansible.builtin.package:
+    name:
+      - podman
+      - podman-compose
+    state: present
+
+- name: compose 디렉토리 생성
+  ansible.builtin.file:
+    path: "{{ logging_compose_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: docker-compose.yaml 템플릿 배포
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: "{{ logging_compose_dir }}/docker-compose.yaml"
+    mode: '0644'
+
+- name: MongoDB 컨테이너 존재 여부 확인
+  ansible.builtin.command:
+    cmd: podman ps -a --filter "name=mongodb" --format "{{ '{{' }}.Names{{ '}}' }}"
+  register: mongodb_container
+  changed_when: false
+  failed_when: false
+
+- name: podman-compose up -d 실행
+  ansible.builtin.command:
+    cmd: podman-compose up -d
+    chdir: "{{ logging_compose_dir }}"
+  when: mongodb_container.stdout == ""

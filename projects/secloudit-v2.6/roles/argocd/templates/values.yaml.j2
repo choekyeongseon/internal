@@ -1,0 +1,14 @@
+# roles/argocd/templates/values.yaml.j2
+# ArgoCD Helm values 템플릿
+
+server:
+  extraArgs:
+    - --insecure
+  ingress:
+    enabled: true
+    hosts:
+      - {{ argocd_server_url }}
+
+configs:
+  secret:
+    argocdServerAdminPassword: {{ argocd_admin_password | password_hash('bcrypt') }}

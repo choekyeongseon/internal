@@ -1,0 +1,64 @@
+# group_vars/all.yaml
+# SECloudit v2.0 공통 변수
+
+---
+# SECloudit 버전
+secloudit_version: "v2.0"
+
+# K8s 버전 분기
+k8s_version_map:
+  "1.24": "1.24.14"
+  "1.25": "1.25.10"
+  "1.26": "1.26.11"
+  "1.27": "1.27.8"
+k8s_version: "1.27"
+
+# Image Registry 설정
+registry_host: "sample.harbor.com"
+registry_port: 443
+
+# OSS 버전 (v2.0 기준)
+calico_version: "3.26.3"
+gitlab_version: "15.11.3-ce.0"
+gitlab_runner_version: "v15.11.1"
+chartmuseum_version: "v0.16.0"
+mysql_version: "8.0"
+mongodb_version: "5.0"
+tekton_pipeline_version: "0.44.0"
+tekton_triggers_version: "0.22.0"
+# TODO: ArgoCD 버전 확인 필요
+# TODO: Istio 버전 확인 필요
+
+# Console VM 포트 설정
+mysql_port: 3306
+mongodb_port: 27017
+fluentd_forward_port: 24224
+gitlab_http_port: 8080
+gitlab_https_port: 8443
+gitlab_ssh_port: 8022
+chartmuseum_port: 5080
+gitlabci_api_port: 8093
+gitlabci_metrics_port: 9091
+console_port: 9080
+
+# Nginx Ingress NodePort
+ingress_http_nodeport: 30080
+ingress_https_nodeport: 30443
+
+# 시크릿 (vault 참조)
+mysql_root_password: "{{ vault_mysql_root_password }}"
+mongodb_root_password: "{{ vault_mongodb_root_password }}"
+harbor_admin_password: "{{ vault_harbor_admin_password }}"
+gitlab_root_password: "{{ vault_gitlab_root_password }}"
+chartmuseum_password: "{{ vault_chartmuseum_password }}"
+argocd_admin_password: "{{ vault_argocd_admin_password }}"
+secloudit_admin_password: "{{ vault_secloudit_admin_password }}"
+
+# FluentD Agent 설정
+# TODO: 확인 필요
+fluent_forward_host: "{{ hostvars['console-01']['ansible_host'] }}"
+fluent_forward_port: 24224
+cluster_divide_value: "demo"  # TODO: 클러스터 구분자 확인 필요
+
+# kubeconfig 경로
+kubeconfig_path: "/etc/kubernetes/admin.conf"

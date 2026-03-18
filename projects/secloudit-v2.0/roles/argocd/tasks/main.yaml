@@ -1,0 +1,54 @@
+# roles/argocd/tasks/main.yaml
+# ArgoCD 배포 (in-cluster)
+
+---
+- name: kubeconfig 경로 확인
+  ansible.builtin.stat:
+    path: "{{ kubeconfig_path }}"
+  register: kubeconfig_stat
+
+- name: kubeconfig 존재 확인
+  ansible.builtin.fail:
+    msg: "kubeconfig not found at {{ kubeconfig_path }}"
+  when: not kubeconfig_stat.stat.exists
+
+- name: manifest 디렉토리 생성
+  ansible.builtin.file:
+    path: "{{ argocd_manifest_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: ArgoCD manifest 배포
+  ansible.builtin.copy:
+    src: argocd-install.yaml
+    dest: "{{ argocd_manifest_dir }}/argocd-install.yaml"
+    mode: '0644'
+
+- name: argocd namespace 존재 여부 확인
+  ansible.builtin.command:
+    cmd: kubectl get namespace argocd
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  register: argocd_ns
+  changed_when: false
+  failed_when: false
+
+- name: argocd namespace 생성
+  ansible.builtin.command:
+    cmd: kubectl create namespace argocd
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  when: argocd_ns.rc != 0
+
+- name: ArgoCD 적용
+  ansible.builtin.command:
+    cmd: kubectl apply -n argocd -f {{ argocd_manifest_dir }}/argocd-install.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: ArgoCD 배포 완료 대기
+  ansible.builtin.command:
+    cmd: kubectl wait --for=condition=Available deployment --all -n argocd --timeout=300s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  changed_when: false

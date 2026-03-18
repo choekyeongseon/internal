@@ -1,0 +1,31 @@
+---
+# SECloudit v2.3 공통 변수
+# 모든 호스트에 적용되는 변수 정의
+
+# 이미지 레지스트리
+image_registry: sample.harbor.com
+
+# 포트 설정
+keycloak_port: 8012
+portal_port: 8010
+admin_portal_port: 8011
+mongodb_port: 27017
+fluentd_port: 24224
+chartmuseum_port: 5080
+mysql_port: 3306
+
+# 공통 설정
+docker_compose_dir: /opt/secloudit
+kubeconfig_path: /root/.kube/config  # TODO: 확인 필요
+
+# 시크릿 참조 (값은 vault에서 관리 - 절대 평문 금지)
+# vault_keycloak_admin_password
+# vault_keycloak_db_password
+# vault_mysql_root_password
+# vault_mongodb_root_password
+# vault_secloudit_admin_password
+# vault_chartmuseum_password
+
+# FluentD 설정 (# TODO: 확인 필요)
+# vault_fluentd_forward_host
+# vault_cluster_divide_value
