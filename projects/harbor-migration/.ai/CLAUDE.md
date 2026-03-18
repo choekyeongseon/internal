@@ -134,46 +134,59 @@
 
 ### 프로젝트 개요
 - 프로젝트명: harbor-migration
-- 목적: 기존 Harbor에서 2년 내 사용된 이미지만 SRE Harbor로 선별 마이그레이션
-- 기술스택: Bash, Harbor API v2.0, curl, jq, docker
-- 선행 조건: 없음
+- 목적: 기존 Harbor(harbor.innogrid.com)에서 최근 2년 내 사용 이미지를 SRE Harbor로 마이그레이션
+- 기술스택: Harbor API, bash, skopeo(또는 docker), NFS
+- 선행 조건: 없음 (독립 프로젝트)
 
-### 서버 정보
-- 작업 서버: 192.168.190.101
-- SSH 포트: 8124
-- SSH 계정: secloudit
-- SSH 비밀번호: !$paas$!
-- 작업 경로: /root/native-harbor/
+### 환경 구성
+- 소스 Harbor: https://harbor.innogrid.com (192.168.190.101, v2.11.2, 계정: sre-user)
+- 대상 Harbor: https://harbor.sre.local (192.168.201.12, 계정: sre-admin)
 
-### 환경 정보
-- 소스 Harbor: harbor.innogrid.com (sre-user / qwe1212!Q)
-- 대상 Harbor: harbor.sre.local (sre-admin / qwe1212!Q)
-- 대상 Harbor 스토리지: NFS (192.168.201.61) — 재배포 완료
-- 백업 저장소: /root/native-harbor/backups (서버 로컬)
-- 분류 기준일: 2024-03-17
+### 마이그레이션 기준일
+- 2024-03-17 (현재 기준 2년 전)
+- pull_time >= 2024-03-17 → 마이그레이션 대상
+- pull_time < 2024-03-17 (또는 없고 push_time < 2024-03-17) → 백업 대상
 
-### 분석 결과 (확정)
-- 총 프로젝트: 80개 / 총 레포지토리: 560개 / 총 이미지: 6,448개
-- 마이그레이션 대상: 4,295개 / 914.84 GB
-- 백업 대상: 2,153개 / 165.46 GB
-- secloudit-helm: 마이그레이션 용량의 72.5% (663.58 GB) — PROJECT_FILTER로 별도 실행
+### 주요 수치 (분석 완료)
+- 전체: 80개 프로젝트, 6,448개 이미지, 1,080.30 GB
+- 마이그레이션 대상: 4,295개 이미지, 914.84 GB
+- 백업 대상: 2,153개 이미지, 165.46 GB
+- 주의: secloudit-helm 단독 663.58 GB (전체의 72.5%) — 별도 전략 필요
 
-### 산출물
-- harbor-analyze.sh  ← 완료 (분석 스크립트, CSV 생성)
-- harbor-backup.sh   ← 완료 (EXIT trap, 체크포인트 포함)
-- harbor-migrate.sh  ← 완료 (EXIT trap, 체크포인트, 멀티태그, 프로젝트 자동생성 포함)
+### 스크립트 구성
+- harbor-analyze.sh: 이미지 분석 (완료)
+- harbor-migrate.sh: 마이그레이션 실행 (구현 예정)
+- harbor-backup.sh: 백업 실행 (구현 예정)
 
-### 실행 규칙
-- 모든 스크립트는 서버(192.168.190.101)에서 실행한다
-- 로컬에서 실행 불가 (harbor.sre.local은 내부 DNS만 등록됨)
-- 서버에 기존 docker images 2,881개 존재 — pull 후 반드시 즉시 rmi
-- tmux 세션(harbor-migration)에서 실행
+### 이미지 처리 단위 (핵심)
+이미지 1개당 아래 순서를 하나의 원자적 작업 단위로 처리:
+1. 소스 Harbor에서 pull
+2. 대상 Harbor로 push
+3. 로컬 이미지 즉시 삭제 (docker rmi)
+4. 성공/실패 로그 기록
 
-### 미확인 항목
-- # TODO: 서버 /root 파티션 여유 공간 (df -h /root)
-- # TODO: 서버 /etc/docker/daemon.json 기존 내용 (insecure-registries 등록 전 확인 필요)
+→ 로컬에 이미지가 누적되지 않으므로 디스크 공간은 이미지 1개 분량만 필요
+
+### 코딩 규칙
+- bash 스크립트는 set -euo pipefail 적용
+- Harbor API 호출 시 페이지네이션 처리 필수 (page_size=100)
+- pull→push→삭제 각 단계 실패 시 해당 이미지는 skip 후 로그 기록, 다음 이미지 계속 진행
+- 진행 상황은 로그 파일에 기록 (timestamp + 이미지명 + 성공/실패 + 소요시간)
+- 이미지 push 후 대상 Harbor에서 digest 검증 필수
+- 중단 후 재시작 시 이미 완료된 이미지는 skip (resume 기능)
+
+### 시크릿 항목 (값 기재 금지)
+- vault_harbor_source_password
+- vault_harbor_target_password
+
+### 미확인 항목 (# TODO — 임의 결정 금지)
+- SRE Harbor 가용 스토리지 용량
+- secloudit-helm 처리 전략 (분할 전송 vs 직접 복제)
+- 야간 작업 일정 및 담당자
+- 백업 저장소 경로 및 가용 용량
 
 ### 참고 문서
 - 리서치 산출물: `.ai/research.md`
 - 구현 계획: `.ai/plan.md`
 - 세션 로그: `.ai/logs/`
+- 스킬 문서: `.ai/skills/`

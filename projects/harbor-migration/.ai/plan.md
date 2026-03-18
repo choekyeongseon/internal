@@ -1,188 +1,560 @@
 # plan.md — harbor-migration
 
 > 작성일: 2026-03-17
-> 상태: `검토 중`
-> 현재 Phase: 덩어리 C (서버 사전 준비 및 샘플 테스트)
+> 상태: `구현 완료 (D 제외)`
+> 현재 Phase: Phase 4 - 구현 완료
 
 ---
 
 ## 1. 목표
 
-기존 Harbor(harbor.innogrid.com)의 전체 이미지 6,448개(1,080.30 GB)를 SRE Harbor(harbor.sre.local)로 마이그레이션한다.
+기존 Harbor(harbor.innogrid.com)에서 최근 2년 내 사용 이미지(4,295개, 914.84GB)를 SRE Harbor로 마이그레이션하고, 미사용 이미지(2,153개, 165.46GB)를 백업 저장소로 이동
 
 ### 성공 기준
-- [ ] 전체 6,448개 이미지가 harbor.sre.local에 존재
-- [ ] 샘플 이미지 pull 테스트 성공
-- [ ] failed_migrate.csv 검토 및 재시도 완료
-- [ ] 소스 Harbor Garbage Collection 실행
+- [ ] 마이그레이션 대상 4,295개 이미지가 SRE Harbor에 존재
+- [ ] 백업 대상 2,153개 이미지가 백업 저장소에 존재
+- [ ] 모든 이미지 digest 검증 통과
+- [ ] SRE Harbor에서 샘플 이미지 pull 테스트 성공
 
 ---
 
-## 2. 환경 정보
-
-### 서버 정보
-- 작업 서버: 192.168.190.101
-- SSH 포트: 8124
-- SSH 계정: secloudit
-- SSH 비밀번호: !$paas$!
-- 작업 경로: /root/native-harbor/
-
-### Harbor 정보
-- 소스 Harbor: harbor.innogrid.com (sre-user / qwe1212!Q)
-- 대상 Harbor: harbor.sre.local (sre-admin / qwe1212!Q)
-- 대상 Harbor 스토리지: NFS (192.168.201.61) — 재배포 완료
-
-### 분석 결과
-- 총 프로젝트: 80개 / 총 레포지토리: 560개 / 총 이미지: 6,448개
-- 전체 용량: 1,080.30 GB
-- secloudit-helm: 전체 용량의 61.4% (663.58 GB) — PROJECT_FILTER로 별도 실행
-
----
-
-## 3. 실행 방식
-
-### tmux 세션 기반
-- 장시간 작업을 위해 tmux 세션에서 실행
-- 세션명: `harbor-migration` (본 실행) / `harbor-test` (샘플 테스트)
-- SSH 연결 끊겨도 작업 지속
-
-### 체크포인트
-- `done_migrate.txt`: 마이그레이션 완료된 이미지 목록
-- 재실행 시 완료된 항목은 SKIP
-
-### EXIT trap
-- 중단 시 잔여 이미지 자동 정리 (docker rmi)
-- 서버에 기존 docker images 2,881개 존재 → 혼재 방지
-
----
-
-## 4. 트레이드오프
+## 2. 트레이드오프
 
 | 결정 | 선택 | 이유 |
 |---|---|---|
-| 마이그레이션 범위 | 전체 이미지 | 백업/마이그레이션 구분 없이 단순화 |
-| CSV 파일 | all_images.csv 단일 파일 | 관리 단순화 |
-| 마이그레이션 방식 | pull → tag → push | Harbor 간 직접 복제보다 유연함 |
-| secloudit-helm 처리 | 별도 실행 | 663 GB 단일 프로젝트로 분리 필요 |
-| 실행 환경 | 서버 직접 실행 | harbor.sre.local 내부 DNS 제약 |
+| 이미지 전송 도구 | docker pull/push | 원자적 처리(pull→push→rmi) 구현 용이, 범용적 |
+| 처리 단위 | 이미지 1개씩 | 로컬 디스크 공간 최소화 (이미지 1개 분량만 필요) |
+| 실패 처리 | skip 후 계속 | abort 하지 않음, 전체 작업 완료 후 실패 목록 재처리 |
+| resume 기능 | digest 기반 완료 로그 | 중단 후 재시작 시 완료된 이미지 skip |
+| API 호출 방식 | curl + jq | bash 스크립트 환경에서 범용적, 의존성 최소화 |
+| 페이지네이션 | page_size=100 | Harbor API 기본값, 안정적 처리 |
+| 로그 형식 | timestamp + 이미지명 + 성공/실패 + 소요시간 | 장애 추적 및 재시작 지점 확인 용이 |
+| secloudit-helm 처리 | # TODO 별도 전략 | 663.58GB 단독 프로젝트, 전략 확정 필요 |
 
 ---
 
-## 5. 구현 체크리스트
+## 3. 구현 체크리스트
 
-### 덩어리 A — harbor-backup.sh (취소)
+### 덩어리 A: SRE Harbor 사전 준비
+<!-- 이 덩어리 = Claude Code 작업 지시 1회 단위 -->
 
-- [~] A-1 ~ A-4: 백업 기능 불필요 — 전체 마이그레이션으로 변경
-
-### 덩어리 B — harbor-migrate.sh ✅ 완료 (20a00c2)
-
-- [x] B-1: 환경변수 설정 (SRC/DST Harbor 정보)
-- [x] B-2: EXIT trap 구현
-- [x] B-3: 체크포인트 로직 구현 (done_migrate.txt)
-- [x] B-4: 마이그레이션 루프 구현 (pull → tag → push → rmi)
-- [x] B-2-5: 프로젝트 자동생성 (대상 Harbor API 호출)
-- [ ] B-5: MIGRATE_CSV 기본값 변경 (migrate_images.csv → all_images.csv)
-
-### 덩어리 C — 서버 사전 준비 및 샘플 테스트
-
-- [ ] C-0: 스크립트 서버 전송 (로컬에서 scp 실행)
+- [x] A-1: SRE Harbor 연결 테스트 스크립트 작성
+  - 파일: `scripts/test-sre-connection.sh`
+  - 변경: API ping 테스트 및 인증 확인
   ```bash
-  scp -P 8124 harbor-migrate.sh all_images.csv migrate_sample.csv \
-      secloudit@192.168.190.101:/root/native-harbor/
-  ```
-  (migrate_sample.csv는 all_images.csv 상위 6줄로 새로 생성)
+  #!/bin/bash
+  set -euo pipefail
 
-- [ ] C-1: 서버 사전 확인
-  ```bash
-  df -h /root
-  cat /etc/docker/daemon.json
-  docker images | wc -l
+  HARBOR_URL="${HARBOR_TARGET_URL:-https://harbor.sre.local}"
+  HARBOR_USER="${HARBOR_TARGET_USER:-sre-admin}"
+
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] SRE Harbor 연결 테스트 시작"
+
+  # API ping 테스트
+  curl -sf -u "${HARBOR_USER}:${HARBOR_TARGET_PASSWORD}" \
+       "${HARBOR_URL}/api/v2.0/ping" || {
+    echo "ERROR: SRE Harbor 연결 실패"
+    exit 1
+  }
+
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] SRE Harbor 연결 성공"
   ```
 
-- [ ] C-2: insecure-registries 등록
-  - harbor.sre.local을 /etc/docker/daemon.json에 추가
+- [x] A-2: 프로젝트 목록 추출 스크립트 작성
+  - 파일: `scripts/list-source-projects.sh`
+  - 변경: 소스 Harbor에서 마이그레이션 대상 프로젝트 목록 추출
   ```bash
-  sudo systemctl restart docker
-  docker info | grep -A5 "Insecure Registries"
+  #!/bin/bash
+  set -euo pipefail
+
+  HARBOR_URL="${HARBOR_SOURCE_URL:-https://harbor.innogrid.com}"
+  OUTPUT_FILE="data/source_projects.txt"
+
+  # migrate_images.csv에서 고유 프로젝트 추출 (헤더 먼저 제거 후 정렬)
+  tail -n +2 data/migrate_images.csv | cut -d',' -f1 | sort -u > "${OUTPUT_FILE}"
+
+  echo "추출된 프로젝트 수: $(wc -l < ${OUTPUT_FILE})"
   ```
 
-- [ ] C-3: 마이그레이션 샘플 테스트
+- [x] A-3: SRE Harbor 프로젝트 생성 스크립트 작성
+  - 파일: `scripts/create-sre-projects.sh`
+  - 변경: 소스 프로젝트와 동일 구조로 SRE Harbor에 프로젝트 생성
   ```bash
-  MIGRATE_CSV=migrate_sample.csv ./harbor-migrate.sh
-  ```
-  - 검증: harbor.sre.local에 이미지 존재 확인
+  #!/bin/bash
+  set -euo pipefail
 
-- [ ] C-4: 체크포인트 동작 확인
-  - 재실행 시 `SKIP (완료됨)` 출력 여부 확인
+  HARBOR_URL="${HARBOR_TARGET_URL:-https://harbor.sre.local}"
+  HARBOR_USER="${HARBOR_TARGET_USER:-sre-admin}"
+  PROJECT_LIST="data/source_projects.txt"
+  LOG_FILE="logs/create-projects-$(date +%Y%m%d).log"
 
-- [ ] C-5: PROJECT_FILTER 동작 확인
-  ```bash
-  PROJECT_FILTER=ai-platform ./harbor-migrate.sh 2>&1 | head -20
-  ```
+  while read -r project; do
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] 프로젝트 생성: ${project}" | tee -a "${LOG_FILE}"
 
-### 덩어리 D — 본 실행
-
-- [ ] D-1: 마이그레이션 전체 실행 (secloudit-helm 제외)
-  ```bash
-  tmux new -s harbor-migration
-  grep -v "^secloudit-helm" all_images.csv > all_except_helm.csv
-  MIGRATE_CSV=all_except_helm.csv ./harbor-migrate.sh 2>&1 | tee logs/migrate-$(date +%Y%m%d).log
-  ```
-
-- [ ] D-2: secloudit-helm 별도 실행 (663 GB)
-  ```bash
-  PROJECT_FILTER=secloudit-helm MIGRATE_CSV=all_images.csv \
-      ./harbor-migrate.sh 2>&1 | tee logs/migrate-helm-$(date +%Y%m%d).log
+    curl -sf -X POST \
+         -u "${HARBOR_USER}:${HARBOR_TARGET_PASSWORD}" \
+         -H "Content-Type: application/json" \
+         -d "{\"project_name\": \"${project}\", \"public\": false}" \
+         "${HARBOR_URL}/api/v2.0/projects" || {
+      echo "WARNING: ${project} 생성 실패 (이미 존재할 수 있음)" | tee -a "${LOG_FILE}"
+    }
+  done < "${PROJECT_LIST}"
   ```
 
-### 덩어리 E — 검증 및 완료
-
-- [ ] E-1: 대상 Harbor 이미지 수 확인
+- [x] A-4: 디렉토리 구조 생성
+  - 파일: 프로젝트 루트
+  - 변경: scripts/, data/, logs/ 디렉토리 생성
   ```bash
-  curl -sk -u "sre-admin:qwe1212!Q" "https://harbor.sre.local/api/v2.0/statistics" | jq
+  mkdir -p scripts data logs
   ```
 
-- [ ] E-2: 샘플 이미지 pull 테스트
-  - 임의의 이미지 3개 선정하여 pull 테스트
+### 덩어리 B: harbor-backup.sh 구현
+<!-- 이 덩어리 = Claude Code 작업 지시 1회 단위 -->
+<!-- 핵심: backup_images.csv에서 이미지 목록 읽기 → 이미지 1개 단위: pull → 로컬 tar 저장 → docker rmi → 로그 기록 → 실패 시 skip 후 계속 진행 -->
 
-- [ ] E-3: failed_migrate.csv 검토 및 재시도
-  - 실패 원인 분석 후 재시도
+- [x] B-1: 백업 스크립트 기본 구조 작성
+  - 파일: `scripts/harbor-backup.sh`
+  - 변경: backup_images.csv 기반 백업, resume 기능 포함
+  ```bash
+  #!/bin/bash
+  set -euo pipefail
 
-- [ ] E-4: Garbage Collection 실행 (소스 Harbor)
-  - Harbor UI에서 GC 실행 또는 API 호출
+  # 설정
+  SOURCE_REGISTRY="${HARBOR_SOURCE_URL:-harbor.innogrid.com}"
+  SOURCE_USER="${HARBOR_SOURCE_USER:-sre-user}"
+  BACKUP_DIR="${BACKUP_PATH:-/opt/harbor-backup}"  # TODO: 경로 확정 필요
+  BACKUP_LIST="data/backup_images.csv"
+  LOG_FILE="logs/backup-$(date +%Y%m%d).log"
+  DONE_LOG="logs/backup_done.log"
 
-- [ ] E-5: 최종 보고서 작성
-  - 마이그레이션 완료 건수, 실패 건수, 총 용량 정리
+  # 디렉토리 생성
+  mkdir -p "${BACKUP_DIR}" logs
+  touch "${DONE_LOG}"
+
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] 백업 시작" | tee -a "${LOG_FILE}"
+  echo "대상: $(tail -n +2 ${BACKUP_LIST} | wc -l) 이미지" | tee -a "${LOG_FILE}"
+  ```
+
+- [x] B-2: 이미지 백업 함수 구현 (pull → tar 저장 → docker rmi)
+  - 파일: `scripts/harbor-backup.sh`
+  - 변경: 원자적 처리 단위 구현
+  ```bash
+  backup_image() {
+    local project="$1"
+    local repo="$2"
+    local tag="$3"
+    local digest="$4"
+    local start_time=$(date +%s)
+
+    local image="${SOURCE_REGISTRY}/${project}/${repo}:${tag}"
+    local tar_path="${BACKUP_DIR}/${project}/${repo}"
+    local tar_file="${tar_path}/${tag}.tar"
+
+    mkdir -p "${tar_path}"
+
+    # 1. docker pull
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] PULL: ${image}" | tee -a "${LOG_FILE}"
+    if ! docker pull "${image}" >> "${LOG_FILE}" 2>&1; then
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL: pull 실패 - ${image}" | tee -a "${LOG_FILE}"
+      return 1
+    fi
+
+    # 2. docker save (tar 저장)
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] SAVE: ${tar_file}" | tee -a "${LOG_FILE}"
+    if ! docker save -o "${tar_file}" "${image}" >> "${LOG_FILE}" 2>&1; then
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL: save 실패 - ${image}" | tee -a "${LOG_FILE}"
+      docker rmi "${image}" 2>/dev/null || true
+      return 1
+    fi
+
+    # 3. docker rmi (로컬 이미지 즉시 삭제)
+    docker rmi "${image}" >> "${LOG_FILE}" 2>&1 || true
+
+    local end_time=$(date +%s)
+    local elapsed=$((end_time - start_time))
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUCCESS: ${image} (${elapsed}s)" | tee -a "${LOG_FILE}"
+  }
+  ```
+
+- [x] B-3: 메인 루프 (resume 기능 + 실패 시 skip)
+  - 파일: `scripts/harbor-backup.sh`
+  - 변경: 완료된 이미지 skip, 실패해도 다음 이미지 계속 진행
+  - 주의: 프로세스 치환 사용 (파이프 대신) — 카운터 변수 보존
+  ```bash
+  # 메인 루프 — 프로세스 치환으로 subshell 문제 해결
+  total=$(tail -n +2 "${BACKUP_LIST}" | wc -l)
+  count=0
+  success=0
+  failed=0
+
+  while IFS=',' read -r project repo tag digest size; do
+    ((count++))
+    image_key="${project}/${repo}:${tag}"  # local 제거 (루프 내부는 함수 밖)
+
+    # resume: 이미 완료된 이미지 skip
+    if grep -qF "${digest}" "${DONE_LOG}" 2>/dev/null; then
+      echo "[${count}/${total}] SKIP: ${image_key} (이미 완료)" | tee -a "${LOG_FILE}"
+      continue
+    fi
+
+    echo "[${count}/${total}] 처리 중: ${image_key}" | tee -a "${LOG_FILE}"
+
+    # 실패해도 abort 하지 않고 다음 이미지 계속 진행
+    if backup_image "${project}" "${repo}" "${tag}" "${digest}"; then
+      echo "${digest}" >> "${DONE_LOG}"
+      ((success++))
+    else
+      ((failed++))
+    fi
+  done < <(tail -n +2 "${BACKUP_LIST}")  # 프로세스 치환
+
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] 백업 완료: 성공 ${success}, 실패 ${failed}, 전체 ${count}" | tee -a "${LOG_FILE}"
+  ```
+
+- [x] B-4: --dry-run 옵션 추가
+  - 파일: `scripts/harbor-backup.sh`
+  - 변경: 실제 작업 없이 대상 목록만 출력
+  ```bash
+  # 옵션 파싱
+  DRY_RUN=false
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --dry-run) DRY_RUN=true; shift ;;
+      *) shift ;;
+    esac
+  done
+
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    echo "[DRY-RUN] 실제 백업을 수행하지 않습니다."
+    tail -n +2 "${BACKUP_LIST}" | while IFS=',' read -r project repo tag digest size; do
+      echo "  ${project}/${repo}:${tag} (${size})"
+    done
+    exit 0
+  fi
+  ```
+
+### 덩어리 C: harbor-migrate.sh 구현
+<!-- 이 덩어리 = Claude Code 작업 지시 1회 단위 -->
+<!-- 핵심: migrate_images.csv에서 이미지 목록 읽기 → 이미지 1개 단위: pull → push → docker rmi → 로그 기록 → 실패 시 skip 후 계속 진행 (abort 하지 않음) → resume 기능 → push 완료 후 대상 Harbor digest 검증 -->
+
+- [x] C-1: 마이그레이션 스크립트 기본 구조 작성
+  - 파일: `scripts/harbor-migrate.sh`
+  - 변경: migrate_images.csv 기반, resume 기능 포함
+  ```bash
+  #!/bin/bash
+  set -euo pipefail
+
+  # 설정
+  SOURCE_REGISTRY="${HARBOR_SOURCE_URL:-harbor.innogrid.com}"
+  SOURCE_USER="${HARBOR_SOURCE_USER:-sre-user}"
+  TARGET_REGISTRY="${HARBOR_TARGET_URL:-harbor.sre.local}"
+  TARGET_USER="${HARBOR_TARGET_USER:-sre-admin}"
+  MIGRATE_LIST="data/migrate_images.csv"
+  LOG_FILE="logs/migrate-$(date +%Y%m%d).log"
+  DONE_LOG="logs/migrate_done.log"
+
+  # secloudit-helm 제외 (별도 처리)
+  EXCLUDE_PROJECT="secloudit-helm"
+
+  # 디렉토리 생성
+  mkdir -p logs
+  touch "${DONE_LOG}"
+
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] 마이그레이션 시작" | tee -a "${LOG_FILE}"
+  ```
+
+- [x] C-2: 이미지 전송 함수 구현 (pull → push → docker rmi → digest 검증)
+  - 파일: `scripts/harbor-migrate.sh`
+  - 변경: 원자적 처리 단위 + digest 검증
+  ```bash
+  migrate_image() {
+    local project="$1"
+    local repo="$2"
+    local tag="$3"
+    local expected_digest="$4"
+    local start_time=$(date +%s)
+
+    local src_image="${SOURCE_REGISTRY}/${project}/${repo}:${tag}"
+    local dst_image="${TARGET_REGISTRY}/${project}/${repo}:${tag}"
+
+    # 1. docker pull (소스에서)
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] PULL: ${src_image}" | tee -a "${LOG_FILE}"
+    if ! docker pull "${src_image}" >> "${LOG_FILE}" 2>&1; then
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL: pull 실패 - ${src_image}" | tee -a "${LOG_FILE}"
+      return 1
+    fi
+
+    # 2. docker tag (대상 레지스트리용)
+    docker tag "${src_image}" "${dst_image}"
+
+    # 3. docker push (대상으로)
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] PUSH: ${dst_image}" | tee -a "${LOG_FILE}"
+    if ! docker push "${dst_image}" >> "${LOG_FILE}" 2>&1; then
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] FAIL: push 실패 - ${dst_image}" | tee -a "${LOG_FILE}"
+      docker rmi "${src_image}" "${dst_image}" 2>/dev/null || true
+      return 1
+    fi
+
+    # 4. docker rmi (로컬 이미지 즉시 삭제)
+    docker rmi "${src_image}" "${dst_image}" >> "${LOG_FILE}" 2>&1 || true
+
+    # 5. digest 검증 (대상 Harbor에서)
+    # repo 이름에 슬래시 포함 시 URL 인코딩 필요 (예: library/nginx → library%2Fnginx)
+    local encoded_repo=$(echo "${repo}" | sed 's|/|%2F|g')
+    local actual_digest=$(curl -sf -u "${TARGET_USER}:${HARBOR_TARGET_PASSWORD}" \
+      "https://${TARGET_REGISTRY}/api/v2.0/projects/${project}/repositories/${encoded_repo}/artifacts/${tag}" | \
+      jq -r '.digest' 2>/dev/null || echo "")
+
+    if [[ "${actual_digest}" != "${expected_digest}" && -n "${expected_digest}" ]]; then
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] WARN: digest 불일치 - ${dst_image}" | tee -a "${LOG_FILE}"
+      echo "  expected: ${expected_digest}, actual: ${actual_digest}" | tee -a "${LOG_FILE}"
+    fi
+
+    local end_time=$(date +%s)
+    local elapsed=$((end_time - start_time))
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUCCESS: ${dst_image} (${elapsed}s)" | tee -a "${LOG_FILE}"
+  }
+  ```
+
+- [x] C-3: 메인 루프 (resume + 실패 시 skip + secloudit-helm 제외)
+  - 파일: `scripts/harbor-migrate.sh`
+  - 변경: 완료된 이미지 skip, 실패해도 abort 하지 않음
+  - 주의: 프로세스 치환 사용 (파이프 대신) — 카운터 변수 보존
+  ```bash
+  # 메인 루프 (secloudit-helm 제외) — 프로세스 치환으로 subshell 문제 해결
+  total=$(tail -n +2 "${MIGRATE_LIST}" | grep -v "^${EXCLUDE_PROJECT}," | wc -l)
+  count=0
+  success=0
+  failed=0
+
+  while IFS=',' read -r project repo tag digest size; do
+    image_key="${project}/${repo}:${tag}"  # local 제거 (루프 내부는 함수 밖)
+
+    # secloudit-helm 제외
+    if [[ "${project}" == "${EXCLUDE_PROJECT}" ]]; then
+      echo "[SKIP] ${image_key} - secloudit-helm 별도 처리" | tee -a "${LOG_FILE}"
+      continue
+    fi
+
+    ((count++))
+
+    # resume: 이미 완료된 이미지 skip
+    if grep -qF "${digest}" "${DONE_LOG}" 2>/dev/null; then
+      echo "[${count}/${total}] SKIP: ${image_key} (이미 완료)" | tee -a "${LOG_FILE}"
+      continue
+    fi
+
+    echo "[${count}/${total}] 처리 중: ${image_key}" | tee -a "${LOG_FILE}"
+
+    # 실패해도 abort 하지 않고 다음 이미지 계속 진행
+    if migrate_image "${project}" "${repo}" "${tag}" "${digest}"; then
+      echo "${digest}" >> "${DONE_LOG}"
+      ((success++))
+    else
+      ((failed++))
+    fi
+  done < <(tail -n +2 "${MIGRATE_LIST}")  # 프로세스 치환
+
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] 마이그레이션 완료: 성공 ${success}, 실패 ${failed}, 전체 ${count}" | tee -a "${LOG_FILE}"
+  ```
+
+- [x] C-4: --dry-run 및 --project 옵션 추가
+  - 파일: `scripts/harbor-migrate.sh`
+  - 변경: 테스트용 옵션 지원
+  ```bash
+  # 옵션 파싱
+  DRY_RUN=false
+  TARGET_PROJECT=""
+
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --dry-run) DRY_RUN=true; shift ;;
+      --project) TARGET_PROJECT="$2"; shift 2 ;;
+      *) shift ;;
+    esac
+  done
+
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    echo "[DRY-RUN] 실제 마이그레이션을 수행하지 않습니다."
+    tail -n +2 "${MIGRATE_LIST}" | grep -v "^${EXCLUDE_PROJECT}," | \
+      while IFS=',' read -r project repo tag digest size; do
+        [[ -n "${TARGET_PROJECT}" && "${project}" != "${TARGET_PROJECT}" ]] && continue
+        echo "  ${project}/${repo}:${tag} (${size})"
+      done
+    exit 0
+  fi
+  ```
+
+- [x] C-5: docker login 처리 (스크립트 시작 시)
+  - 파일: `scripts/harbor-migrate.sh`
+  - 변경: 소스/대상 레지스트리 로그인
+  ```bash
+  # Docker 로그인
+  echo "소스 Harbor 로그인..."
+  echo "${HARBOR_SOURCE_PASSWORD}" | docker login "${SOURCE_REGISTRY}" -u "${SOURCE_USER}" --password-stdin
+
+  echo "대상 Harbor 로그인..."
+  echo "${HARBOR_TARGET_PASSWORD}" | docker login "${TARGET_REGISTRY}" -u "${TARGET_USER}" --password-stdin
+  ```
+
+### 덩어리 D: secloudit-helm 전용 처리 스크립트
+<!-- # TODO: 전략 확정 후 진행 -->
+
+- [ ] D-1: secloudit-helm 처리 전략 결정
+  - 파일: N/A
+  - 변경: # TODO - 아래 옵션 중 선택 필요
+    - 옵션 1: 태그 단위 분할 전송 (야간 N회 분할)
+    - 옵션 2: NFS 직접 복제 (Harbor 스토리지 레벨)
+    - 옵션 3: rsync 기반 증분 전송
+  - 필요 정보:
+    - SRE Harbor 가용 스토리지 용량
+    - 야간 작업 가능 시간대
+    - 네트워크 대역폭 제한
+
+- [ ] D-2: secloudit-helm 전용 스크립트 작성
+  - 파일: `scripts/harbor-migrate-helm.sh`
+  - 변경: # TODO - 전략 확정 후 구현
+  ```bash
+  #!/bin/bash
+  # TODO: secloudit-helm 처리 전략 확정 후 구현
+  # 예상 용량: 663.58 GB (전체의 72.5%)
+  ```
+
+- [ ] D-3: 분할 전송 로직 구현 (전략 확정 시)
+  - 파일: `scripts/harbor-migrate-helm.sh`
+  - 변경: # TODO - 전략에 따라 구현 방식 결정
+
+### 덩어리 E: 검증 스크립트 (digest 검증, pull 테스트)
+<!-- 이 덩어리 = Claude Code 작업 지시 1회 단위 -->
+
+- [x] E-1: digest 검증 스크립트 작성
+  - 파일: `scripts/verify-digest.sh`
+  - 변경: 소스와 대상 이미지 digest 비교
+  - 주의: skopeo 대신 Harbor API(curl) 사용 — Windows 환경 호환성
+  ```bash
+  #!/bin/bash
+  set -euo pipefail
+
+  SOURCE_REGISTRY="${HARBOR_SOURCE_URL:-harbor.innogrid.com}"
+  TARGET_REGISTRY="${HARBOR_TARGET_URL:-harbor.sre.local}"
+  TARGET_USER="${HARBOR_TARGET_USER:-sre-admin}"
+  LOG_FILE="logs/verify-$(date +%Y%m%d).log"
+
+  verify_digest() {
+    local project="$1"
+    local repo="$2"
+    local tag="$3"
+    local expected_digest="$4"
+
+    # 대상 Harbor API로 실제 digest 조회 (skopeo 대신 curl 사용)
+    # repo 이름에 슬래시 포함 시 URL 인코딩 필요 (예: library/nginx → library%2Fnginx)
+    local encoded_repo=$(echo "${repo}" | sed 's|/|%2F|g')
+    local actual_digest=$(curl -sf \
+      -u "${TARGET_USER}:${HARBOR_TARGET_PASSWORD}" \
+      "https://${TARGET_REGISTRY}/api/v2.0/projects/${project}/repositories/${encoded_repo}/artifacts/${tag}" | \
+      jq -r '.digest' 2>/dev/null || echo "")
+
+    if [[ "${actual_digest}" == "${expected_digest}" ]]; then
+      echo "PASS: ${project}/${repo}:${tag}" | tee -a "${LOG_FILE}"
+      return 0
+    else
+      echo "FAIL: ${project}/${repo}:${tag} (expected: ${expected_digest}, actual: ${actual_digest})" | tee -a "${LOG_FILE}"
+      return 1
+    fi
+  }
+  ```
+
+- [x] E-2: --sample 옵션으로 샘플 검증 지원
+  - 파일: `scripts/verify-digest.sh`
+  - 변경: 전체 대신 N개 샘플만 검증
+  ```bash
+  SAMPLE_COUNT=0
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      --sample) SAMPLE_COUNT="$2"; shift 2 ;;
+      *) shift ;;
+    esac
+  done
+
+  # 샘플 추출
+  if [[ ${SAMPLE_COUNT} -gt 0 ]]; then
+    VERIFY_LIST=$(tail -n +2 "${MIGRATE_LIST}" | shuf -n "${SAMPLE_COUNT}")
+  else
+    VERIFY_LIST=$(tail -n +2 "${MIGRATE_LIST}")
+  fi
+  ```
+
+- [x] E-3: pull 테스트 스크립트 작성
+  - 파일: `scripts/test-pull.sh`
+  - 변경: SRE Harbor에서 샘플 이미지 pull 테스트
+  ```bash
+  #!/bin/bash
+  set -euo pipefail
+
+  TARGET_URL="${HARBOR_TARGET_URL:-https://harbor.sre.local}"
+
+  test_pull() {
+    local project="$1"
+    local repo="$2"
+    local tag="$3"
+
+    local image="${TARGET_URL#https://}/${project}/${repo}:${tag}"
+
+    echo "Pull 테스트: ${image}"
+    docker pull "${image}" && docker rmi "${image}" || {
+      echo "ERROR: Pull 실패 - ${image}"
+      return 1
+    }
+    echo "SUCCESS: ${image}"
+  }
+
+  # 샘플 이미지 pull 테스트
+  echo "=== Pull 테스트 시작 ==="
+  # 각 프로젝트에서 1개씩 샘플 선택하여 테스트
+  ```
+
+- [x] E-4: 검증 결과 리포트 생성
+  - 파일: `scripts/verify-digest.sh`
+  - 변경: 검증 결과 요약 리포트 출력
+  ```bash
+  # 리포트 생성
+  generate_report() {
+    echo ""
+    echo "========== 검증 결과 리포트 =========="
+    echo "검증 일시: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "전체: ${total}건"
+    echo "성공: ${passed}건"
+    echo "실패: ${failed}건"
+    echo "성공률: $(( passed * 100 / total ))%"
+    echo "======================================"
+  }
+  ```
 
 ---
 
-## 6. 리스크
+## 4. 미결 사항
 
-| 리스크 | 영향도 | 대응 방안 |
+| 항목 | 관련 덩어리 | 상태 |
 |---|---|---|
-| 네트워크 대역폭 (1,080 GB) | 높음 | 야간/주말 작업, tmux 세션 유지 |
-| harbor.sre.local TLS | 높음 | insecure-registries 등록 (C-2) |
-| 서버 디스크 임시 공간 | 중간 | EXIT trap으로 잔여 이미지 정리 |
-| docker images 2,881개 혼재 | 중간 | EXIT trap + 즉시 rmi |
-| secloudit-helm 663 GB | 중간 | PROJECT_FILTER로 분리 실행 |
-| API Rate Limit | 낮음 | 동시 요청 없음, 순차 처리 |
+| SRE Harbor 스토리지 가용 용량 | A, C | # TODO |
+| secloudit-helm 처리 전략 | D | # TODO |
+| 백업 저장소 경로 | B | # TODO |
+| 야간 작업 일정 | D | # TODO |
+| 포트 443 방화벽 오픈 여부 | A | # TODO |
+| 스크립트 실행 위치 | A, B, C | # TODO (로컬 PC vs 소스 Harbor 서버 SSH) |
 
 ---
 
-## 7. 미확인 항목
-
-| 항목 | 확인 방법 |
-|---|---|
-| 서버 /root 파티션 여유 공간 | `df -h /root` |
-| daemon.json 기존 내용 | `cat /etc/docker/daemon.json` |
-
----
-
-## 8. 인라인 메모란
+## 5. 인라인 메모란
 
 <!--
   사람이 검토하면서 메모를 남기는 공간입니다.
   Claude는 3단계에서 이 메모를 반영하여 plan.md를 업데이트합니다.
+
+  예시:
+  [메모] A-2: 여기서는 async로 처리해야 함
+  [메모] B-1: 기존 함수명 유지할 것
+  [질문] C-1: 이 방식이 맞나? 확인 필요
 -->
 
 (검토 메모를 여기에 작성)
@@ -193,6 +565,8 @@
 
 | 날짜 | 변경 내용 |
 |---|---|
-| 2026-03-17 | 초안 작성 — 분석 완료, 덩어리 A/B 완료 상태로 시작 |
-| 2026-03-17 | 백업 보류 — 마이그레이션만 우선 진행 |
-| 2026-03-17 | 전체 마이그레이션으로 변경 — 백업/마이그레이션 구분 삭제, all_images.csv 사용 |
+| 2026-03-17 | 초안 작성 - 덩어리 A~E 정의 |
+| 2026-03-17 | 요구사항 변경 반영: 원자적 처리(pull→push→rmi), resume 기능, 실패 시 skip, digest 검증 |
+| 2026-03-17 | 검토 피드백 반영: B-3/C-3 프로세스 치환, local 키워드 제거, E-1 skopeo→curl, 미결사항 추가 |
+| 2026-03-17 | 추가 피드백: A-2 헤더 스킵 순서 수정, C-2/E-1 repo URL 인코딩 추가 |
+| 2026-03-17 | 구현 완료: 덩어리 A, B, C, E 전체 구현 및 커밋 (D는 TODO) |
