@@ -1,0 +1,218 @@
+[2026-03-18 05:38:34] 샘플 검증 시작 (50개)
+[1/50] 검증 중: devops-frontend/devopsit:v1.6.0
+FAIL: devops-frontend/devopsit:v1.6.0 (expected: sha256:35f713b0d57b0c02e64cba0f096190852b86f43a1dab7885be0ea1c9d0af7dde, actual: )
+[2/50] 검증 중: devops-backend/development:0.0.21
+PASS: devops-backend/development:0.0.21
+[3/50] 검증 중: devops-frontend/dev:10-c24efb7
+PASS: devops-frontend/dev:10-c24efb7
+[4/50] 검증 중: bookinfo/examples-bookinfo-productpage-v1:4aa952ae
+PASS: bookinfo/examples-bookinfo-productpage-v1:4aa952ae
+[5/50] 검증 중: demo-devops-frontend/dev:latest
+FAIL: demo-devops-frontend/dev:latest (expected: sha256:5e34b982057949ae72d0e09c6dc1d208396d9e76b5b1f73375e94c710d634c1f, actual: )
+[6/50] 검증 중: mysql/mysql:8.0
+PASS: mysql/mysql:8.0
+[7/50] 검증 중: kalee-test/secloudit-delivery-adapter:v2.5-test-01
+PASS: kalee-test/secloudit-delivery-adapter:v2.5-test-01
+[8/50] 검증 중: mlflow/mlflow-apiserver:0.1.5
+PASS: mlflow/mlflow-apiserver:0.1.5
+[9/50] 검증 중: secloudit-java/gateway-service:17
+PASS: secloudit-java/gateway-service:17
+[10/50] 검증 중: kalee-test/system-event-module:v0.15
+PASS: kalee-test/system-event-module:v0.15
+[11/50] 검증 중: devops-frontend/dev:86-3539a15
+PASS: devops-frontend/dev:86-3539a15
+[12/50] 검증 중: secloudit-ui/develop:f7c025ea-19191
+PASS: secloudit-ui/develop:f7c025ea-19191
+[13/50] 검증 중: jx-install-test-image/secloudit-api-service:240826-01
+PASS: jx-install-test-image/secloudit-api-service:240826-01
+[14/50] 검증 중: kubeflow/mysql:8.0.29
+PASS: kubeflow/mysql:8.0.29
+[15/50] 검증 중: bookinfo/examples-bookinfo-ratings-v1:5d41f755
+FAIL: bookinfo/examples-bookinfo-ratings-v1:5d41f755 (expected: sha256:0a2a1739e277db7b4fd84dad2ed9fa3e055fe49483c6eef4766d585a4dcfac1c, actual: )
+[16/50] 검증 중: kimkyungmin/blog-app:latest
+FAIL: kimkyungmin/blog-app:latest (expected: sha256:195870da6897c1d270a1350db0afbbff720deab5a6688c9a32da7411e7cd1b71, actual: )
+[17/50] 검증 중: convimage/convfirst:1.6
+FAIL: convimage/convfirst:1.6 (expected: sha256:e60642d4a72df62abb3f5eb9618b50eed5e929372966a21c9c6b9eb4eadcee0a, actual: )
+[18/50] 검증 중: devops-backend/devopsit-dev:20251016-100030-613107
+PASS: devops-backend/devopsit-dev:20251016-100030-613107
+[19/50] 검증 중: bookinfo/examples-bookinfo-details-v2:4aa952ae
+PASS: bookinfo/examples-bookinfo-details-v2:4aa952ae
+[20/50] 검증 중: devops-frontend/dev:40-ed10844
+PASS: devops-frontend/dev:40-ed10844
+[21/50] 검증 중: secloudit-java/portal:v2.2.2
+FAIL: secloudit-java/portal:v2.2.2 (expected: sha256:a6238fd215680058e509254664a1e0d20b42ce235802240a5e77fdb95a373699, actual: )
+[22/50] 검증 중: tekton-pipeline/sidecarlogresults:v0.44.0
+PASS: tekton-pipeline/sidecarlogresults:v0.44.0
+[23/50] 검증 중: devops-frontend/dev:20-a9f8e1e
+PASS: devops-frontend/dev:20-a9f8e1e
+[24/50] 검증 중: tekton-triggers/eventlistenersink:v0.22.0
+PASS: tekton-triggers/eventlistenersink:v0.22.0
+[25/50] 검증 중: tekton/secloudit-trigger-controller:v0.19.0
+PASS: tekton/secloudit-trigger-controller:v0.19.0
+[26/50] 검증 중: secloudit/portal:latest
+PASS: secloudit/portal:latest
+[27/50] 검증 중: secloudit/master:2.0.4
+FAIL: secloudit/master:2.0.4 (expected: sha256:0ed33a49cfbd0992a021ebf0f3eff669e67f74da17c6a11a79c606f969ab64ff, actual: )
+[28/50] 검증 중: devops-backend/devopsit:1.5.0
+FAIL: devops-backend/devopsit:1.5.0 (expected: sha256:6895d5c0e05f8f977bcef186ed4e4e7b57704e33a218be484d0102d126fa9183, actual: )
+[29/50] 검증 중: bookinfo/examples-bookinfo-details-v1:b4c1290a
+FAIL: bookinfo/examples-bookinfo-details-v1:b4c1290a (expected: sha256:9ab57369ed7a740e4f7366ff6b53423d1e78d5ca26114557a30ca43979b84f0c, actual: )
+[30/50] 검증 중: secloudit/site-kcs-v2.0.3:latest
+FAIL: secloudit/site-kcs-v2.0.3:latest (expected: sha256:5b384bca6ec234880da31d077f7ef20ab7d434d0761931e2997a0827c69b233f, actual: )
+[31/50] 검증 중: secloudit-ui/master:61d61b6c
+PASS: secloudit-ui/master:61d61b6c
+[32/50] 검증 중: devops-backend/development:0.0.10
+PASS: devops-backend/development:0.0.10
+[33/50] 검증 중: kalee-test/secloudit-v1.5:paas-1365-59
+PASS: kalee-test/secloudit-v1.5:paas-1365-59
+[34/50] 검증 중: secloudit-2.2-dev/gateway-service:7
+PASS: secloudit-2.2-dev/gateway-service:7
+[35/50] 검증 중: secloudit-java/keycloak:test-2.3.0-providers
+PASS: secloudit-java/keycloak:test-2.3.0-providers
+[36/50] 검증 중: secloudit-helm/api-service:v2.3.0
+FAIL: secloudit-helm/api-service:v2.3.0 (expected: sha256:36c05c955659f5c949b465c68e4a83510b58e66b330ce6eb743c36141eab4817, actual: )
+[37/50] 검증 중: secloudit-java/secloudit-jxgo-service:latest
+FAIL: secloudit-java/secloudit-jxgo-service:latest (expected: sha256:f80585a0c6dae1468f226074170a58b80ec31de4a353065b4ffa68d0dc59fc68, actual: )
+[38/50] 검증 중: secloudit-ui/release-secloudit-1.5:e5d1b957
+PASS: secloudit-ui/release-secloudit-1.5:e5d1b957
+[39/50] 검증 중: new-se-tmp/nginx:1.25.3
+PASS: new-se-tmp/nginx:1.25.3
+[40/50] 검증 중: devops-backend/paas1159:latest
+FAIL: devops-backend/paas1159:latest (expected: sha256:31862096aca2a68e205dc0c809ff39b372d68098663cfcb28940ae5b5346c6f4, actual: )
+[41/50] 검증 중: devops-backend/development:104-f7ffa26
+PASS: devops-backend/development:104-f7ffa26
+[42/50] 검증 중: secloudit-java/gateway-service:57
+PASS: secloudit-java/gateway-service:57
+[43/50] 검증 중: devops-frontend-pipeline-test/devopsit-test:19-9a7f440
+FAIL: devops-frontend-pipeline-test/devopsit-test:19-9a7f440 (expected: sha256:ccb671449367a6ca6770e0b0b8160028ad1e91e30c5368ecdbfc1d3c7cb66cbd, actual: )
+[44/50] 검증 중: demo-devops-frontend/dev:31-57c8728
+PASS: demo-devops-frontend/dev:31-57c8728
+[45/50] 검증 중: devops-backend/development:0.0.12
+PASS: devops-backend/development:0.0.12
+[46/50] 검증 중: secloudit-ui/site-edims-v1.5:27c25ae8
+PASS: secloudit-ui/site-edims-v1.5:27c25ae8
+[47/50] 검증 중: devops-frontend/dev:67-b93b52e
+FAIL: devops-frontend/dev:67-b93b52e (expected: sha256:5e6084f789880c6d7f361da3341db184505e0fbb62f96804cd3fce25e51ba627, actual: )
+[48/50] 검증 중: dev/tomcat-demo-3:latest
+PASS: dev/tomcat-demo-3:latest
+[49/50] 검증 중: devops-backend/devopsit-dev:20250813-180136-589078
+PASS: devops-backend/devopsit-dev:20250813-180136-589078
+[50/50] 검증 중: devops-frontend-pipeline-test/devopsit-test:17-9a7f440
+PASS: devops-frontend-pipeline-test/devopsit-test:17-9a7f440
+
+========== 검증 결과 리포트 ==========
+검증 일시: 2026-03-18 05:38:58
+전체: 50건
+성공: 35건
+실패: 15건
+성공률: 70%
+======================================
+[2026-03-18 06:00:54] 샘플 검증 시작 (50개)
+[1/50] 검증 중: devops-backend/development:1.0.1-SNAPSHOT
+PASS: devops-backend/development:1.0.1-SNAPSHOT
+[2/50] 검증 중: secloudit-helm/keycloak:latest
+FAIL: secloudit-helm/keycloak:latest (expected: sha256:98ae2889c95b923fbf851b17a9bebbb7dccb500289a0151d5eba0a8065a160b6, actual: )
+[3/50] 검증 중: secloudit-java/gateway-service:16
+PASS: secloudit-java/gateway-service:16
+[4/50] 검증 중: devops-frontend/dev:87-9a7f440
+FAIL: devops-frontend/dev:87-9a7f440 (expected: sha256:9c1d455e22bf8531e65abed4c7994342ad067f293b9a48c2eacfe2d1e5fe47b6, actual: )
+[5/50] 검증 중: airflow/airflow:latest
+PASS: airflow/airflow:latest
+[6/50] 검증 중: ai-platform/kwater-backend:v1
+PASS: ai-platform/kwater-backend:v1
+[7/50] 검증 중: kalee-test/secloudit-v1.5:paas-1365-64
+PASS: kalee-test/secloudit-v1.5:paas-1365-64
+[8/50] 검증 중: secloudit-java/secloudit-jxgo-service:24
+PASS: secloudit-java/secloudit-jxgo-service:24
+[9/50] 검증 중: bookinfo/examples-bookinfo-productpage-v1:5e3f9324
+FAIL: bookinfo/examples-bookinfo-productpage-v1:5e3f9324 (expected: sha256:c675e9ecd2b3dffd76a15f39de7a0f190ac3f4ba2a383dc122879de0a606bcda, actual: )
+[10/50] 검증 중: calico/kube-controllers:v3.26.3
+PASS: calico/kube-controllers:v3.26.3
+[11/50] 검증 중: kalee-test/api-service:test-0509-01
+PASS: kalee-test/api-service:test-0509-01
+[12/50] 검증 중: kalee-test/ssh-chat:v2.0.0
+PASS: kalee-test/ssh-chat:v2.0.0
+[13/50] 검증 중: secloudit-ui/master:45fae27a
+PASS: secloudit-ui/master:45fae27a
+[14/50] 검증 중: okd-secloud-install/helm:4.15.0-0.okd-2024-03-10-010116
+PASS: okd-secloud-install/helm:4.15.0-0.okd-2024-03-10-010116
+[15/50] 검증 중: devops-backend/development:0.9.5
+PASS: devops-backend/development:0.9.5
+[16/50] 검증 중: secloudit-2.2-dev/portal:c02a6ad2-28
+PASS: secloudit-2.2-dev/portal:c02a6ad2-28
+[17/50] 검증 중: airflow/workflow:0.1.3
+PASS: airflow/workflow:0.1.3
+[18/50] 검증 중: kalee-test/secloudit-v1.5:paas-1365-61
+PASS: kalee-test/secloudit-v1.5:paas-1365-61
+[19/50] 검증 중: secloudit-ui/develop:v2.2.3
+FAIL: secloudit-ui/develop:v2.2.3 (expected: sha256:d1ad4065c6581a9af6837a7a4a8c7ceac45ef3dd7a23f68e46d0187569a52d06, actual: )
+[20/50] 검증 중: secloudit-java/gateway-service:3
+PASS: secloudit-java/gateway-service:3
+[21/50] 검증 중: devops-backend/devopsit-dev:20251027-162332-95ad39
+PASS: devops-backend/devopsit-dev:20251027-162332-95ad39
+[22/50] 검증 중: secloudit-ui/develop:4999fd40-18975
+PASS: secloudit-ui/develop:4999fd40-18975
+[23/50] 검증 중: bookinfo/examples-bookinfo-productpage-v1:b4c1290a
+FAIL: bookinfo/examples-bookinfo-productpage-v1:b4c1290a (expected: sha256:c675e9ecd2b3dffd76a15f39de7a0f190ac3f4ba2a383dc122879de0a606bcda, actual: )
+[24/50] 검증 중: devops-frontend/devopsit-test:latest-test1
+FAIL: devops-frontend/devopsit-test:latest-test1 (expected: sha256:ccb671449367a6ca6770e0b0b8160028ad1e91e30c5368ecdbfc1d3c7cb66cbd, actual: )
+[25/50] 검증 중: secloudit-ui/develop:71edfbfe-18621
+PASS: secloudit-ui/develop:71edfbfe-18621
+[26/50] 검증 중: secloudit-java/api-service:39
+PASS: secloudit-java/api-service:39
+[27/50] 검증 중: bookinfo/examples-bookinfo-reviews-v3:b575cc90
+FAIL: bookinfo/examples-bookinfo-reviews-v3:b575cc90 (expected: sha256:b523aaf0ea7b95093afa6cbfc376074355d1a63f0672ecdb5130d753ceeae8ee, actual: )
+[28/50] 검증 중: jx-install-test-image/secloudit-jxgo-service:240819-01
+PASS: jx-install-test-image/secloudit-jxgo-service:240819-01
+[29/50] 검증 중: secloudit-2.2-dev/gateway-service:6
+PASS: secloudit-2.2-dev/gateway-service:6
+[30/50] 검증 중: secloudit-java/secloudit-jxgo-service:36
+PASS: secloudit-java/secloudit-jxgo-service:36
+[31/50] 검증 중: devops-backend/development:0.0.23
+PASS: devops-backend/development:0.0.23
+[32/50] 검증 중: mlflow/front-poc:0.1.2
+PASS: mlflow/front-poc:0.1.2
+[33/50] 검증 중: secloudit-java/gateway-service:15
+PASS: secloudit-java/gateway-service:15
+[34/50] 검증 중: secloudit-java/gateway-service:37
+PASS: secloudit-java/gateway-service:37
+[35/50] 검증 중: secloudit-2.2-dev/portal:bddffec1
+PASS: secloudit-2.2-dev/portal:bddffec1
+[36/50] 검증 중: secloudit-2.2-dev/api-service:8
+PASS: secloudit-2.2-dev/api-service:8
+[37/50] 검증 중: devops-backend/devopsit-dev:20250619-163015-715183
+PASS: devops-backend/devopsit-dev:20250619-163015-715183
+[38/50] 검증 중: devops-frontend/dev:7-a09434d
+PASS: devops-frontend/dev:7-a09434d
+[39/50] 검증 중: secloudit-2.2-dev/api-service:2
+PASS: secloudit-2.2-dev/api-service:2
+[40/50] 검증 중: devops-frontend/dev:2-9a7f440
+PASS: devops-frontend/dev:2-9a7f440
+[41/50] 검증 중: secloudit-ui/master:090b6219
+PASS: secloudit-ui/master:090b6219
+[42/50] 검증 중: secloudit/release-secloudit-1.5:26cb7f45
+PASS: secloudit/release-secloudit-1.5:26cb7f45
+[43/50] 검증 중: secloudit-java/gateway-service:17
+PASS: secloudit-java/gateway-service:17
+[44/50] 검증 중: secloudit-java/secloudit-go-service:7
+FAIL: secloudit-java/secloudit-go-service:7 (expected: sha256:6d66213a4657b1ba0ce77ac6a9fc75060a4b1f7dbbdf32c250811ebe5a26b0d8, actual: )
+[45/50] 검증 중: bookinfo/examples-bookinfo-details-v2:b2efa1b5
+FAIL: bookinfo/examples-bookinfo-details-v2:b2efa1b5 (expected: sha256:42017fcdd47d4f3a8ea04697016869a3c5124fb80e293f4a662be211243a34fa, actual: )
+[46/50] 검증 중: secloudit-2.2-dev/portal:3e9af838-44
+PASS: secloudit-2.2-dev/portal:3e9af838-44
+[47/50] 검증 중: kalee-test/secloudit-v1.5:paas-1365-ori
+PASS: kalee-test/secloudit-v1.5:paas-1365-ori
+[48/50] 검증 중: devops-util/jenkins-home:2.499-jdk21
+FAIL: devops-util/jenkins-home:2.499-jdk21 (expected: sha256:d7f2842379afb83110a499e02b52ae1e5d4ac2fdb2d1efc09c04be0557525147, actual: )
+[49/50] 검증 중: secloudit-2.2-dev/jxgo:28f751e0-2
+PASS: secloudit-2.2-dev/jxgo:28f751e0-2
+[50/50] 검증 중: devops-frontend/dev:18-32ecb18
+PASS: devops-frontend/dev:18-32ecb18
+
+========== 검증 결과 리포트 ==========
+검증 일시: 2026-03-18 06:01:22
+전체: 50건
+성공: 40건
+실패: 10건
+성공률: 80%
+======================================
