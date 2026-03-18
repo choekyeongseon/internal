@@ -1,0 +1,101 @@
+#!/bin/bash
+# ─────────────────────────────────────────────────────────────────────────────
+# ai-workflow-framework pre-commit hook
+# 설치: cp hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 색상 정의
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo " pre-commit hook 실행 중..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+EXIT_CODE=0
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. plan.md 존재 여부 확인 (경고만, 차단하지 않음)
+# ─────────────────────────────────────────────────────────────────────────────
+echo "[ 1/3 ] plan.md 확인"
+
+if [ -f ".ai/plan.md" ]; then
+    echo -e "${GREEN}✓${NC} .ai/plan.md 존재함"
+else
+    echo -e "${YELLOW}⚠️${NC} .ai/plan.md가 없습니다. 계획 없이 구현 중인지 확인하세요."
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. test.sh 실행 (존재하는 경우)
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
+echo "[ 2/3 ] 테스트 실행"
+
+if [ -f "test.sh" ]; then
+    echo "test.sh 실행 중..."
+    if bash test.sh; then
+        echo -e "${GREEN}✓${NC} 테스트 통과"
+    else
+        echo -e "${RED}✗${NC} 테스트 실패 - 커밋이 차단됩니다."
+        EXIT_CODE=1
+    fi
+elif [ -f "tests/test.sh" ]; then
+    echo "tests/test.sh 실행 중..."
+    if bash tests/test.sh; then
+        echo -e "${GREEN}✓${NC} 테스트 통과"
+    else
+        echo -e "${RED}✗${NC} 테스트 실패 - 커밋이 차단됩니다."
+        EXIT_CODE=1
+    fi
+else
+    echo -e "${YELLOW}⚠️${NC} test.sh 없음 - 건너뜀"
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. lint.sh 실행 (존재하는 경우)
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
+echo "[ 3/3 ] 린트 실행"
+
+if [ -f "lint.sh" ]; then
+    echo "lint.sh 실행 중..."
+    if bash lint.sh; then
+        echo -e "${GREEN}✓${NC} 린트 통과"
+    else
+        echo -e "${RED}✗${NC} 린트 실패 - 커밋이 차단됩니다."
+        EXIT_CODE=1
+    fi
+elif [ -f "scripts/lint.sh" ]; then
+    echo "scripts/lint.sh 실행 중..."
+    if bash scripts/lint.sh; then
+        echo -e "${GREEN}✓${NC} 린트 통과"
+    else
+        echo -e "${RED}✗${NC} 린트 실패 - 커밋이 차단됩니다."
+        EXIT_CODE=1
+    fi
+else
+    echo -e "${YELLOW}⚠️${NC} lint.sh 없음 - 건너뜀"
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 결과 출력
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [ $EXIT_CODE -eq 0 ]; then
+    echo -e "${GREEN}✓ pre-commit hook 통과${NC}"
+else
+    echo -e "${RED}✗ pre-commit hook 실패 - 커밋이 차단되었습니다.${NC}"
+    echo ""
+    echo "문제를 수정한 후 다시 커밋하세요."
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+exit $EXIT_CODE

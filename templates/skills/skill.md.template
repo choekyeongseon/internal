@@ -1,0 +1,88 @@
+# {{SKILL_NAME}}
+
+> 적용 대상: (이 스킬을 언제 사용하는가)
+> 발견 경로: (세션 로그에서 발견 / 코드 리뷰 / 외부 가이드 등)
+> 반복 횟수: (패턴이 몇 회 반복되어 스킬로 분리했는가)
+
+---
+
+## 규칙
+
+### 필수 (MUST)
+- (반드시 지켜야 할 규칙)
+- (예: 모든 API 응답은 표준 포맷을 따른다)
+- (예: 에러 발생 시 로깅 필수)
+
+### 권장 (SHOULD)
+- (가능하면 지키는 것이 좋은 규칙)
+- (예: 함수 길이는 30줄 이내 권장)
+- (예: 복잡한 로직은 별도 함수로 분리)
+
+### 금지 (MUST NOT)
+- (절대 하지 말아야 할 것)
+- (예: 하드코딩된 시크릿 사용 금지)
+- (예: 프로덕션 DB 직접 쿼리 금지)
+
+---
+
+## 코드 패턴 예시
+
+### 좋은 예시
+
+```python
+# 설명: 왜 이 방식이 좋은가
+
+def good_example():
+    """좋은 예시 코드"""
+    # 표준 에러 핸들링
+    try:
+        result = do_something()
+        return {"status": "success", "data": result}
+    except ValidationError as e:
+        logger.warning(f"Validation failed: {e}")
+        return {"status": "error", "message": str(e)}
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise
+```
+
+### 나쁜 예시
+
+```python
+# 설명: 왜 이 방식이 나쁜가
+
+def bad_example():
+    """나쁜 예시 코드"""
+    # 에러 무시 - 디버깅 불가
+    try:
+        result = do_something()
+        return result
+    except:
+        pass  # 모든 에러 무시
+```
+
+---
+
+## 체크리스트
+
+작업 완료 시 확인:
+
+- [ ] (확인 항목 1)
+- [ ] (확인 항목 2)
+- [ ] (확인 항목 3)
+- [ ] (확인 항목 4)
+
+---
+
+## 관련 스킬
+
+- `skills/related-skill-1.md`: (관계 설명)
+- `skills/related-skill-2.md`: (관계 설명)
+
+---
+
+## 참고 자료
+
+- (외부 문서 링크)
+- (내부 위키 링크)
+- (관련 코드 경로)

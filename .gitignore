@@ -1,0 +1,8 @@
+# 별도 레포지토리로 관리
+projects/
+
+# macOS
+.DS_Store
+
+# Obsidian
+.obsidian/
