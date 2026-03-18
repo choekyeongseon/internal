@@ -1,0 +1,206 @@
+[2026-03-17 22:40:59] === 파이프라인 시작 ===
+[2026-03-17 22:40:59] [1/5] 이미지 분석 시작
+[2026-03-17 23:02:35] [1/5] 분석 완료 — 마이그레이션: 1226개, 백업: 1022개
+[2026-03-17 23:02:35] [2/5] SRE Harbor 프로젝트 생성
+[2026-03-17 23:02:35] [2/5] 프로젝트 생성 완료
+[2026-03-17 23:02:35] [3/5] 백업 시작
+[2026-03-17 23:02:36] [3/5] 백업 완료 — mkdir: cannot create directory ‘/root’: Permission denied
+[2026-03-17 23:02:36] [4/5] 마이그레이션 시작 (secloudit-helm 제외)
+[2026-03-18 05:38:33] [4/5] 마이그레이션 완료 — 
+[2026-03-18 05:38:33] [5/5] 검증 시작
+[2026-03-18 05:38:59] [5/5] 검증 완료
+[2026-03-18 05:38:59] === 파이프라인 완료 ===
+4] devops-frontend-pipeline-test... done
+[22/84] devops-util... done
+[23/84] dns... done
+[24/84] dnsutils... done
+[25/84] dockerio... done
+[26/84] docker-registry... done
+[27/84] dragonfly... done
+[28/84] extender-test... done
+[29/84] fluentd... done
+[30/84] gitbook... done
+[31/84] gitbook-credential... done
+[32/84] gitcitest... done
+[33/84] gitlab... done
+[34/84] gitlabci-module... done
+[35/84] gitlab-runner... done
+[36/84] gpu-operator... done
+[37/84] gs-test... done
+[38/84] harbor... done
+[39/84] ingress-nginx... done
+[40/84] istio-system... done
+[41/84] jx-install-test-image... done
+[42/84] k8s... done
+[43/84] kafka... done
+[44/84] kalee-test... done
+[45/84] kaniko... done
+[46/84] keycloak... done
+[47/84] kimkyungmin... done
+[48/84] kubeflow... done
+[49/84] logging... done
+[50/84] mlflow... done
+[51/84] mongo... done
+[52/84] mysql... done
+[53/84] native-platform... done
+[54/84] new-se-tmp... done
+[55/84] nexus... done
+[56/84] nginxinc... done
+[57/84] nyancat... done
+[58/84] okd-secloud-install... done
+[59/84] package-helm... done
+[60/84] prometheus... done
+[61/84] qc... done
+[62/84] ray-torch... done
+[63/84] scheduler... done
+[64/84] sechartrepo... done
+[65/84] secloudit... done
+[66/84] secloudit-2.2-dev... done
+[67/84] secloudit-develop... done
+[68/84] secloudit-helm... done
+[69/84] secloudit-java... done
+[70/84] secloudit-portal... done
+[71/84] secloudit-registry-agent... done
+[72/84] secloudit-site... done
+[73/84] secloudit-ui... done
+[74/84] secloudit-util... done
+[75/84] soongsil-openlab... done
+[76/84] tekton... done
+[77/84] tekton-pipeline... done
+[78/84] tekton-triggers... done
+[79/84] testimage... done
+[80/84] tigera... done
+[81/84] tjtestimage... done
+[82/84] tjworkspace... done
+[83/84] tmaxsoftofficial... done
+[84/84] velero... done
+
+========== 분석 결과 ==========
+마이그레이션 대상: 1226개 이미지
+백업 대상: 1022개 이미지
+================================
+[2026-03-17 23:02:35] [1/5] 분석 완료 — 마이그레이션: 1226개, 백업: 1022개
+[2026-03-17 23:02:35] [2/5] SRE Harbor 프로젝트 생성
+[2026-03-17 23:02:35] 프로젝트 생성: velero
+WARNING: velero 생성 실패 (이미 존재할 수 있음)
+[2026-03-17 23:02:35] [2/5] 프로젝트 생성 완료
+[2026-03-17 23:02:35] [3/5] 백업 시작
+[2026-03-17 23:02:36] [3/5] 백업 완료 — mkdir: cannot create directory ‘/root’: Permission denied
+[2026-03-17 23:02:36] [4/5] 마이그레이션 시작 (secloudit-helm 제외)
+[2026-03-17 23:19:51] 마이그레이션 재시작 (프로젝트 59개 생성 완료)
+[2026-03-18 05:38:33] [4/5] 마이그레이션 완료 — 
+[2026-03-18 05:38:33] [5/5] 검증 시작
+[2026-03-18 05:38:34] 샘플 검증 시작 (50개)
+[1/50] 검증 중: devops-frontend/devopsit:v1.6.0
+FAIL: devops-frontend/devopsit:v1.6.0 (expected: sha256:35f713b0d57b0c02e64cba0f096190852b86f43a1dab7885be0ea1c9d0af7dde, actual: )
+[2/50] 검증 중: devops-backend/development:0.0.21
+PASS: devops-backend/development:0.0.21
+[3/50] 검증 중: devops-frontend/dev:10-c24efb7
+PASS: devops-frontend/dev:10-c24efb7
+[4/50] 검증 중: bookinfo/examples-bookinfo-productpage-v1:4aa952ae
+PASS: bookinfo/examples-bookinfo-productpage-v1:4aa952ae
+[5/50] 검증 중: demo-devops-frontend/dev:latest
+FAIL: demo-devops-frontend/dev:latest (expected: sha256:5e34b982057949ae72d0e09c6dc1d208396d9e76b5b1f73375e94c710d634c1f, actual: )
+[6/50] 검증 중: mysql/mysql:8.0
+PASS: mysql/mysql:8.0
+[7/50] 검증 중: kalee-test/secloudit-delivery-adapter:v2.5-test-01
+PASS: kalee-test/secloudit-delivery-adapter:v2.5-test-01
+[8/50] 검증 중: mlflow/mlflow-apiserver:0.1.5
+PASS: mlflow/mlflow-apiserver:0.1.5
+[9/50] 검증 중: secloudit-java/gateway-service:17
+PASS: secloudit-java/gateway-service:17
+[10/50] 검증 중: kalee-test/system-event-module:v0.15
+PASS: kalee-test/system-event-module:v0.15
+[11/50] 검증 중: devops-frontend/dev:86-3539a15
+PASS: devops-frontend/dev:86-3539a15
+[12/50] 검증 중: secloudit-ui/develop:f7c025ea-19191
+PASS: secloudit-ui/develop:f7c025ea-19191
+[13/50] 검증 중: jx-install-test-image/secloudit-api-service:240826-01
+PASS: jx-install-test-image/secloudit-api-service:240826-01
+[14/50] 검증 중: kubeflow/mysql:8.0.29
+PASS: kubeflow/mysql:8.0.29
+[15/50] 검증 중: bookinfo/examples-bookinfo-ratings-v1:5d41f755
+FAIL: bookinfo/examples-bookinfo-ratings-v1:5d41f755 (expected: sha256:0a2a1739e277db7b4fd84dad2ed9fa3e055fe49483c6eef4766d585a4dcfac1c, actual: )
+[16/50] 검증 중: kimkyungmin/blog-app:latest
+FAIL: kimkyungmin/blog-app:latest (expected: sha256:195870da6897c1d270a1350db0afbbff720deab5a6688c9a32da7411e7cd1b71, actual: )
+[17/50] 검증 중: convimage/convfirst:1.6
+FAIL: convimage/convfirst:1.6 (expected: sha256:e60642d4a72df62abb3f5eb9618b50eed5e929372966a21c9c6b9eb4eadcee0a, actual: )
+[18/50] 검증 중: devops-backend/devopsit-dev:20251016-100030-613107
+PASS: devops-backend/devopsit-dev:20251016-100030-613107
+[19/50] 검증 중: bookinfo/examples-bookinfo-details-v2:4aa952ae
+PASS: bookinfo/examples-bookinfo-details-v2:4aa952ae
+[20/50] 검증 중: devops-frontend/dev:40-ed10844
+PASS: devops-frontend/dev:40-ed10844
+[21/50] 검증 중: secloudit-java/portal:v2.2.2
+FAIL: secloudit-java/portal:v2.2.2 (expected: sha256:a6238fd215680058e509254664a1e0d20b42ce235802240a5e77fdb95a373699, actual: )
+[22/50] 검증 중: tekton-pipeline/sidecarlogresults:v0.44.0
+PASS: tekton-pipeline/sidecarlogresults:v0.44.0
+[23/50] 검증 중: devops-frontend/dev:20-a9f8e1e
+PASS: devops-frontend/dev:20-a9f8e1e
+[24/50] 검증 중: tekton-triggers/eventlistenersink:v0.22.0
+PASS: tekton-triggers/eventlistenersink:v0.22.0
+[25/50] 검증 중: tekton/secloudit-trigger-controller:v0.19.0
+PASS: tekton/secloudit-trigger-controller:v0.19.0
+[26/50] 검증 중: secloudit/portal:latest
+PASS: secloudit/portal:latest
+[27/50] 검증 중: secloudit/master:2.0.4
+FAIL: secloudit/master:2.0.4 (expected: sha256:0ed33a49cfbd0992a021ebf0f3eff669e67f74da17c6a11a79c606f969ab64ff, actual: )
+[28/50] 검증 중: devops-backend/devopsit:1.5.0
+FAIL: devops-backend/devopsit:1.5.0 (expected: sha256:6895d5c0e05f8f977bcef186ed4e4e7b57704e33a218be484d0102d126fa9183, actual: )
+[29/50] 검증 중: bookinfo/examples-bookinfo-details-v1:b4c1290a
+FAIL: bookinfo/examples-bookinfo-details-v1:b4c1290a (expected: sha256:9ab57369ed7a740e4f7366ff6b53423d1e78d5ca26114557a30ca43979b84f0c, actual: )
+[30/50] 검증 중: secloudit/site-kcs-v2.0.3:latest
+FAIL: secloudit/site-kcs-v2.0.3:latest (expected: sha256:5b384bca6ec234880da31d077f7ef20ab7d434d0761931e2997a0827c69b233f, actual: )
+[31/50] 검증 중: secloudit-ui/master:61d61b6c
+PASS: secloudit-ui/master:61d61b6c
+[32/50] 검증 중: devops-backend/development:0.0.10
+PASS: devops-backend/development:0.0.10
+[33/50] 검증 중: kalee-test/secloudit-v1.5:paas-1365-59
+PASS: kalee-test/secloudit-v1.5:paas-1365-59
+[34/50] 검증 중: secloudit-2.2-dev/gateway-service:7
+PASS: secloudit-2.2-dev/gateway-service:7
+[35/50] 검증 중: secloudit-java/keycloak:test-2.3.0-providers
+PASS: secloudit-java/keycloak:test-2.3.0-providers
+[36/50] 검증 중: secloudit-helm/api-service:v2.3.0
+FAIL: secloudit-helm/api-service:v2.3.0 (expected: sha256:36c05c955659f5c949b465c68e4a83510b58e66b330ce6eb743c36141eab4817, actual: )
+[37/50] 검증 중: secloudit-java/secloudit-jxgo-service:latest
+FAIL: secloudit-java/secloudit-jxgo-service:latest (expected: sha256:f80585a0c6dae1468f226074170a58b80ec31de4a353065b4ffa68d0dc59fc68, actual: )
+[38/50] 검증 중: secloudit-ui/release-secloudit-1.5:e5d1b957
+PASS: secloudit-ui/release-secloudit-1.5:e5d1b957
+[39/50] 검증 중: new-se-tmp/nginx:1.25.3
+PASS: new-se-tmp/nginx:1.25.3
+[40/50] 검증 중: devops-backend/paas1159:latest
+FAIL: devops-backend/paas1159:latest (expected: sha256:31862096aca2a68e205dc0c809ff39b372d68098663cfcb28940ae5b5346c6f4, actual: )
+[41/50] 검증 중: devops-backend/development:104-f7ffa26
+PASS: devops-backend/development:104-f7ffa26
+[42/50] 검증 중: secloudit-java/gateway-service:57
+PASS: secloudit-java/gateway-service:57
+[43/50] 검증 중: devops-frontend-pipeline-test/devopsit-test:19-9a7f440
+FAIL: devops-frontend-pipeline-test/devopsit-test:19-9a7f440 (expected: sha256:ccb671449367a6ca6770e0b0b8160028ad1e91e30c5368ecdbfc1d3c7cb66cbd, actual: )
+[44/50] 검증 중: demo-devops-frontend/dev:31-57c8728
+PASS: demo-devops-frontend/dev:31-57c8728
+[45/50] 검증 중: devops-backend/development:0.0.12
+PASS: devops-backend/development:0.0.12
+[46/50] 검증 중: secloudit-ui/site-edims-v1.5:27c25ae8
+PASS: secloudit-ui/site-edims-v1.5:27c25ae8
+[47/50] 검증 중: devops-frontend/dev:67-b93b52e
+FAIL: devops-frontend/dev:67-b93b52e (expected: sha256:5e6084f789880c6d7f361da3341db184505e0fbb62f96804cd3fce25e51ba627, actual: )
+[48/50] 검증 중: dev/tomcat-demo-3:latest
+PASS: dev/tomcat-demo-3:latest
+[49/50] 검증 중: devops-backend/devopsit-dev:20250813-180136-589078
+PASS: devops-backend/devopsit-dev:20250813-180136-589078
+[50/50] 검증 중: devops-frontend-pipeline-test/devopsit-test:17-9a7f440
+PASS: devops-frontend-pipeline-test/devopsit-test:17-9a7f440
+
+========== 검증 결과 리포트 ==========
+검증 일시: 2026-03-18 05:38:58
+전체: 50건
+성공: 35건
+실패: 15건
+성공률: 70%
+======================================
+=== Pull 테스트 시작 ===
+샘플 10개 테스트
+[2026-03-18 05:38:59] [5/5] 검증 완료
+[2026-03-18 05:38:59] === 파이프라인 완료 ===
+[2026-03-18 07:20:31] 실패 이미지 재시도 시작

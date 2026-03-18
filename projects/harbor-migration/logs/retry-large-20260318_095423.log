@@ -1,0 +1,28 @@
+[2026-03-18 09:54:23] === 대형 이미지 재시도 시작 (타임아웃 600초) ===
+[2026-03-18 09:54:23] 대상: 12개
+[2026-03-18 09:54:28] 처리 중: ai-platform/kwater-backend:v1-gpu
+[2026-03-18 09:54:28]   PULL: harbor.innogrid.com/ai-platform/kwater-backend:v1-gpu
+v1-gpu: Pulling from ai-platform/kwater-backend
+30b44af2d426: Pulling fs layer
+f66986e8d151: Pulling fs layer
+954b409a0e46: Pulling fs layer
+6f6403c4dfca: Pulling fs layer
+9706bf43390c: Pulling fs layer
+1a86eda0010a: Pulling fs layer
+84a2afebaf4d: Pulling fs layer
+abe44cea80cf: Pulling fs layer
+0c7fd13f2ccc: Pulling fs layer
+f66986e8d151: Download complete
+9706bf43390c: Download complete
+30b44af2d426: Download complete
+6f6403c4dfca: Download complete
+e24ee404f46b: Download complete
+1a86eda0010a: Download complete
+0c7fd13f2ccc: Download complete
+abe44cea80cf: Download complete
+84a2afebaf4d: Download complete
+84a2afebaf4d: Pull complete
+1a86eda0010a: Pull complete
+0c7fd13f2ccc: Pull complete
+f66986e8d151: Pull complete
+9706bf43390c: Pull complete
