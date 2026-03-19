@@ -108,6 +108,14 @@ else
     echo -e "${YELLOW}⚠️${NC} plan.md.template 없음 - 건너뜀"
 fi
 
+# progress.md 복사
+if [ -f "$FRAMEWORK_ROOT/templates/progress.md.template" ]; then
+    substitute_template "$FRAMEWORK_ROOT/templates/progress.md.template" "$AI_DIR/progress.md"
+    echo -e "${GREEN}✓${NC} progress.md 생성됨"
+else
+    echo -e "${YELLOW}⚠️${NC} progress.md.template 없음 - 건너뜀"
+fi
+
 # 세션 로그 템플릿 복사
 if [ -f "$FRAMEWORK_ROOT/templates/logs/session.md.template" ]; then
     substitute_template "$FRAMEWORK_ROOT/templates/logs/session.md.template" "$AI_DIR/logs/$TODAY.md"

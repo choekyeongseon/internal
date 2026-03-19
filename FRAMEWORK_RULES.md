@@ -1,5 +1,5 @@
 # FRAMEWORK_RULES.md
-# version: 2.0.0
+# version: 2.1.0
 # 변경 시 projects/ 하위 모든 프로젝트의 CLAUDE.md 핵심 섹션 업데이트 필요
 
 ---
@@ -18,7 +18,7 @@
 
 | 단계 | Claude에게 하는 말 |
 |---|---|
-| 시작 | `"CLAUDE.md와 research.md를 읽고 현재 상태를 파악해라"` |
+| 시작 | `"CLAUDE.md와 progress.md를 읽고 현재 상태를 파악해라"` |
 | 1단계 | `"[범위]를 분석해서 research.md에 작성해라. 아직 구현하지 마라"` |
 | 2단계 | `"research.md를 읽고 plan.md를 작성해라. 아직 구현하지 마라"` |
 | 3단계 | `"메모를 반영해서 plan.md를 업데이트해라. 아직 구현하지 마라"` |
@@ -112,12 +112,23 @@
 
 ---
 
-## 7. 파일 역할 요약
+## 7. 세션 연속성 보장 (progress.md)
+
+`progress.md`를 **항상 최신 상태로 유지**한다.
+
+- 덩어리 항목 완료 시, 블로커 발생 시, 세션 종료 전 반드시 갱신
+- 커밋 시 progress.md도 함께 커밋
+- 새 세션 시작 시 복원 순서: `CLAUDE.md → progress.md → plan.md → git log`
+
+---
+
+## 8. 파일 역할 요약
 
 | 파일 | 성격 | 갱신 주기 |
 |---|---|---|
 | `.ai/CLAUDE.md` | 영구 규칙 | 규칙 변경 시만 |
 | `.ai/research.md` | 읽기 전용에 가깝게 취급 | 새 정보 파악 시 |
 | `.ai/plan.md` | 살아있는 문서 | 매 작업 세션 |
+| `.ai/progress.md` | **현재 스냅샷** — 세션 연속성 보장 | 항목 완료마다 덮어쓰기 |
 | `.ai/logs/YYYY-MM-DD.md` | 누적 기록 | 요청마다 즉시 |
 | `.ai/skills/*.md` | 반복 패턴 정리 | 패턴 3회 이상 반복 시 |
